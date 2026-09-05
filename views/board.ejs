@@ -25,7 +25,7 @@ function qs(overrides) {
   </select>
   <select name="state" onchange="this.form.submit()">
     <option value="all" <%= filters.state === 'all' ? 'selected' : '' %>>All states</option>
-    <% states.forEach(s => { %><option value="<%= s %>" <%= filters.state === s ? 'selected' : '' %>><%= s %></option><% }) %>
+    <% usStates.forEach(s => { %><option value="<%= s.value %>" <%= filters.state === s.value ? 'selected' : '' %>><%= s.label %> (<%= s.value %>)</option><% }) %>
   </select>
   <select name="date" onchange="this.form.submit()">
     <option value="all" <%= filters.date === 'all' ? 'selected' : '' %>>All dates</option>
