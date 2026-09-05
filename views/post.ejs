@@ -1,0 +1,156 @@
+<%- include('partials/top') %>
+<%
+function qs(overrides) {
+  const params = Object.assign({ city, state, month: monthParam, date: selectedDate }, overrides);
+  return Object.entries(params)
+    .filter(([k, v]) => v !== undefined && v !== null && v !== '')
+    .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
+    .join('&');
+}
+%>
+
+<p class="eyebrow">Organizer &middot; $1&ndash;$5 per listing</p>
+<h2 class="section-title">Post your event</h2>
+<p class="section-sub">Enter your city and the calendar shows which days already have something booked. Choose a clear day, or go in with eyes open — either way, it's your call.</p>
+
+<% if (errors && errors.length) { %><p class="flash error"><%= errors.join(' ') %></p><% } %>
+
+<div class="post-grid">
+  <div class="side-card">
+    <h3>Check availability</h3>
+    <p class="card-sub">Enter a city to see its month at a glance.</p>
+    <form method="get" action="/post" style="display:flex; gap:8px; margin-bottom:16px;">
+      <input type="hidden" name="month" value="<%= monthParam %>">
+      <input type="text" name="city" value="<%= city %>" placeholder="City" required style="flex:1; padding:10px 11px; border-radius:8px; border:1px solid var(--line); background:var(--surface); font-family:'IBM Plex Mono',monospace;">
+      <input type="text" name="state" value="<%= state %>" placeholder="ST" maxlength="2" required style="width:64px; padding:10px 11px; border-radius:8px; border:1px solid var(--line); background:var(--surface); font-family:'IBM Plex Mono',monospace; text-transform:uppercase;">
+      <button class="btn-primary" type="submit">Check</button>
+    </form>
+
+    <% if (calDays) { %>
+      <p class="cal-month">
+        <a href="/post?<%= qs({ month: prevMonthParam, date: '' }) %>">&larr; prev</a>
+        <span><%= monthLabel %></span>
+        <a href="/post?<%= qs({ month: nextMonthParam, date: '' }) %>">next &rarr;</a>
+      </p>
+      <div class="cal-weekdays"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div>
+      <div class="cal-grid">
+        <% calDays.forEach(d => { %>
+          <% if (!d) { %><span class="cal-day cal-blank"></span>
+          <% } else { %>
+            <a class="cal-day <%= d.count >= 2 ? 'busy' : d.count === 1 ? 'one' : '' %> <%= d.date === selectedDate ? 'selected' : '' %>"
+               href="/post?<%= qs({ date: d.date }) %>"><%= d.day %><% if (d.count >= 2) { %><b><%= d.count %></b><% } %></a>
+          <% } %>
+        <% }) %>
+      </div>
+      <div class="cal-legend">
+        <span><span class="sw open"></span>Nothing booked</span>
+        <span><span class="sw one"></span>1 event</span>
+        <span><span class="sw busy"></span>2+ events</span>
+      </div>
+      <% if (selectedDate) { %>
+        <div class="conflict-box <%= conflicts.length === 0 ? 'clear' : '' %>">
+          <% if (conflicts.length === 0) { %>
+            <p class="lead clear">Nothing booked yet in <%= city %>, <%= state %> on <%= selectedDateLabel %></p>
+            <p class="conflict-note">Looks like a clear day.</p>
+          <% } else { %>
+            <p class="lead"><%= conflicts.length %> event<%= conflicts.length > 1 ? 's' : '' %> already booked in <%= city %>, <%= state %> on <%= selectedDateLabel %></p>
+            <% conflicts.forEach(e => { %>
+              <div class="conflict-item"><span><%= e.name %></span><span class="time"><%= e.timeLabel %></span></div>
+            <% }) %>
+            <p class="conflict-note">This won't stop your listing &mdash; it's here so you can spread events out if you'd rather not compete for the same crowd.</p>
+          <% } %>
+        </div>
+      <% } else { %>
+        <div class="conflict-box clear">
+          <p class="lead clear">Pick a day above</p>
+          <p class="conflict-note">We'll show you what's already booked that day in <%= city %>, <%= state %>.</p>
+        </div>
+      <% } %>
+    <% } else { %>
+      <p class="hint">Enter a city and state above to see the availability calendar.</p>
+    <% } %>
+  </div>
+
+  <div>
+    <div class="form-card">
+      <h3>Event details</h3>
+      <% if (selectedDate) { %>
+        <p class="posting-for">Posting for <strong><%= selectedDateLabel %></strong> in <strong><%= city %>, <%= state %></strong></p>
+      <% } else { %>
+        <p class="card-sub">Pick a date from the calendar to continue.</p>
+      <% } %>
+
+      <form method="post" action="/post">
+        <input type="hidden" name="city" value="<%= city %>">
+        <input type="hidden" name="state" value="<%= state %>">
+        <input type="hidden" name="date" value="<%= selectedDate || '' %>">
+
+        <div class="field">
+          <label for="name">Event name</label>
+          <input type="text" id="name" name="name" value="<%= values.name || '' %>" required>
+        </div>
+        <div class="field">
+          <label for="startTime">Start time</label>
+          <input type="time" id="startTime" name="startTime" value="<%= values.startTime || '10:00' %>" required>
+        </div>
+        <div class="field">
+          <label for="category">Category</label>
+          <select id="category" name="category">
+            <% categories.forEach(c => { %><option value="<%= c.value %>"><%= c.label %></option><% }) %>
+          </select>
+        </div>
+        <div class="field">
+          <label for="link">Event link</label>
+          <input type="text" id="link" name="link" placeholder="https://" disabled>
+        </div>
+        <label class="checkline">
+          <input type="checkbox" name="noLink" id="noLink" checked onchange="document.getElementById('link').disabled = this.checked;"> I don't have a link yet
+        </label>
+        <p class="hint">No problem &mdash; edit your listing anytime from your dashboard to add it later.</p>
+
+        <div class="side-card" style="margin-top:18px; padding:18px;">
+          <h3>Pay &amp; post</h3>
+          <div class="plan-options" id="plan-options">
+            <label class="plan-opt" data-price="<%= PLANS.standard.price %>" data-duration="Live until the day of your event.">
+              <span class="label"><span class="label-row"><input type="radio" name="plan" value="standard" checked> Standard listing</span><span class="sub">Live until the day of your event</span></span>
+              <span class="price">$<%= PLANS.standard.price %></span>
+            </label>
+            <label class="plan-opt" data-price="<%= PLANS.basic.price %>" data-duration="Live for 60 days.">
+              <span class="label"><span class="label-row"><input type="radio" name="plan" value="basic"> Basic listing</span><span class="sub">Live for 60 days</span></span>
+              <span class="price">$<%= PLANS.basic.price %></span>
+            </label>
+            <label class="plan-opt" data-price="<%= PLANS.featured.price %>" data-duration="Live until the day of your event.">
+              <span class="label"><span class="label-row"><input type="radio" name="plan" value="featured"> Featured &middot; pinned 7 days</span><span class="sub">Live until the day of your event</span></span>
+              <span class="price">$<%= PLANS.featured.price %></span>
+            </label>
+            <label class="plan-opt" data-price="0" data-duration="Included in your Organizer Pass.">
+              <span class="label"><span class="label-row"><input type="radio" name="plan" value="pass" <%= hasPass ? '' : 'disabled' %>> Use my Organizer Pass</span><span class="sub"><%= hasPass ? 'Unlimited listings, already active' : 'Requires an active pass' %></span></span>
+              <span class="price">included</span>
+            </label>
+          </div>
+          <% if (!hasPass) { %><p class="hint">Don't have a pass yet? <a href="/dashboard">Activate the demo pass</a> from your dashboard.</p><% } %>
+          <div class="total-row">
+            <span>Total due today</span>
+            <span class="amount" id="post-total">$<%= PLANS.standard.price %>.00</span>
+          </div>
+          <p class="total-hint" id="post-duration-note">Live until the day of your event.</p>
+          <button class="btn-primary block" type="submit" <%= selectedDate ? '' : 'disabled' %>>Reserve this listing</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('#plan-options .plan-opt').forEach(function (opt) {
+    opt.addEventListener('click', function () {
+      var radio = opt.querySelector('input[type="radio"]');
+      if (radio.disabled) return;
+      radio.checked = true;
+      document.getElementById('post-total').textContent = '$' + parseFloat(opt.dataset.price).toFixed(2);
+      document.getElementById('post-duration-note').textContent = opt.dataset.duration;
+    });
+  });
+</script>
+
+<%- include('partials/bottom') %>

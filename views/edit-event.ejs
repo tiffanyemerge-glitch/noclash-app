@@ -1,0 +1,53 @@
+<%- include('partials/top') %>
+
+<p class="eyebrow">Organizer</p>
+<h2 class="section-title">Edit listing</h2>
+
+<% if (errors && errors.length) { %><p class="flash error"><%= errors.join(' ') %></p><% } %>
+
+<form method="post" action="/dashboard/events/<%= event.id %>/edit">
+  <div class="form-card" style="max-width:520px;">
+    <div class="field">
+      <label for="name">Event name</label>
+      <input type="text" id="name" name="name" value="<%= event.name %>" required>
+    </div>
+    <div class="field-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="field">
+        <label for="date">Date</label>
+        <input type="date" id="date" name="date" value="<%= event.date %>" required>
+      </div>
+      <div class="field">
+        <label for="startTime">Start time</label>
+        <input type="time" id="startTime" name="startTime" value="<%= event.startTime %>" required>
+      </div>
+    </div>
+    <div class="field-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="field">
+        <label for="city">City</label>
+        <input type="text" id="city" name="city" value="<%= event.city %>" required>
+      </div>
+      <div class="field">
+        <label for="state">State</label>
+        <input type="text" id="state" name="state" value="<%= event.state %>" maxlength="2" required>
+      </div>
+    </div>
+    <div class="field">
+      <label for="category">Category</label>
+      <select id="category" name="category">
+        <% categories.forEach(c => { %><option value="<%= c.value %>" <%= event.category === c.value ? 'selected' : '' %>><%= c.label %></option><% }) %>
+      </select>
+    </div>
+    <div class="field">
+      <label for="link">Event link</label>
+      <input type="text" id="link" name="link" value="<%= event.link || '' %>" placeholder="https://" <%= event.link ? '' : 'disabled' %>>
+    </div>
+    <label class="checkline">
+      <input type="checkbox" name="noLink" id="noLink" <%= event.link ? '' : 'checked' %> onchange="document.getElementById('link').disabled = this.checked;"> I don't have a link yet
+    </label>
+
+    <button class="btn-primary block" type="submit">Save changes</button>
+    <p class="hint"><a href="/dashboard">&larr; back to dashboard</a></p>
+  </div>
+</form>
+
+<%- include('partials/bottom') %>

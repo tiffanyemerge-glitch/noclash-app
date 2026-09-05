@@ -1,0 +1,34 @@
+<%- include('partials/top') %>
+
+<p class="eyebrow">Viewer &middot; always free</p>
+<h2 class="section-title">My alerts</h2>
+<p class="section-sub">Tell us what you're into and where, and we'll let you know when it lands on the board.</p>
+
+<form method="post" action="/account">
+  <div class="form-card" style="max-width:560px;">
+    <div class="field">
+      <label>What are you interested in?</label>
+      <div class="chip-grid">
+        <% categories.forEach(c => { %>
+          <label class="chip-label">
+            <input type="checkbox" name="interests" value="<%= c.value %>" <%= (user.interests || []).includes(c.value) ? 'checked' : '' %>>
+            <%= c.label %>
+          </label>
+        <% }) %>
+      </div>
+    </div>
+    <div class="field">
+      <label for="location">Near</label>
+      <input type="text" id="location" name="location" value="<%= user.location || '' %>" placeholder="e.g. Rivertown, OR &mdash; within 25 miles">
+    </div>
+    <div class="field">
+      <label>How often</label>
+      <label class="radio-line"><input type="radio" name="frequency" value="instant" <%= user.frequency === 'instant' ? 'checked' : '' %>> The moment it's posted</label>
+      <label class="radio-line"><input type="radio" name="frequency" value="daily" <%= !user.frequency || user.frequency === 'daily' ? 'checked' : '' %>> Daily digest</label>
+      <label class="radio-line"><input type="radio" name="frequency" value="weekly" <%= user.frequency === 'weekly' ? 'checked' : '' %>> Weekly digest</label>
+    </div>
+    <button class="btn-primary block" type="submit">Save preferences</button>
+  </div>
+</form>
+
+<%- include('partials/bottom') %>

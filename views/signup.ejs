@@ -1,0 +1,95 @@
+<%- include('partials/top') %>
+
+<p class="eyebrow">Free to create</p>
+<h2 class="section-title">Create an account</h2>
+<p class="section-sub">Choose how you'll use NoClash. You can always create a second account later if you end up wanting both.</p>
+
+<% if (errors && errors.length) { %>
+  <p class="flash error"><%= errors.join(' ') %></p>
+<% } %>
+
+<noscript><style>.role-only { display: block !important; }</style></noscript>
+
+<form method="post" action="/signup" id="signup-form">
+  <div class="form-card" style="max-width:640px;">
+    <div class="role-picker">
+      <label class="role-card" id="role-card-organizer">
+        <input type="radio" name="role" value="organizer" <%= values.role === 'organizer' ? 'checked' : '' %>>
+        <span class="role-title">Organizer</span>
+        <p class="role-sub">Post events. $1&ndash;$5 per listing, or an annual unlimited pass.</p>
+      </label>
+      <label class="role-card" id="role-card-viewer">
+        <input type="radio" name="role" value="viewer" <%= values.role !== 'organizer' ? 'checked' : '' %>>
+        <span class="role-title">Viewer</span>
+        <p class="role-sub">Browse for free, and get alerts on events that match your interests.</p>
+      </label>
+    </div>
+
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" value="<%= values.email || '' %>" required>
+    </div>
+    <div class="field-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" minlength="8" required>
+      </div>
+      <div class="field">
+        <label for="confirmPassword">Confirm password</label>
+        <input type="password" id="confirmPassword" name="confirmPassword" minlength="8" required>
+      </div>
+    </div>
+
+    <div class="role-only" data-role="organizer">
+      <div class="field">
+        <label for="orgName">Organization or organizer name</label>
+        <input type="text" id="orgName" name="orgName" value="<%= values.orgName || '' %>" placeholder="e.g. Rivertown Parks &amp; Rec">
+      </div>
+    </div>
+
+    <div class="role-only" data-role="viewer">
+      <div class="field">
+        <label>What are you interested in?</label>
+        <div class="chip-grid">
+          <% categories.forEach(c => { %>
+            <label class="chip-label">
+              <input type="checkbox" name="interests" value="<%= c.value %>" <%= (values.interests || []).includes(c.value) ? 'checked' : '' %>>
+              <%= c.label %>
+            </label>
+          <% }) %>
+        </div>
+      </div>
+      <div class="field">
+        <label for="location">Near</label>
+        <input type="text" id="location" name="location" value="<%= values.location || '' %>" placeholder="e.g. Rivertown, OR &mdash; within 25 miles">
+      </div>
+      <div class="field">
+        <label>How often</label>
+        <label class="radio-line"><input type="radio" name="frequency" value="instant" <%= values.frequency === 'instant' ? 'checked' : '' %>> The moment it's posted</label>
+        <label class="radio-line"><input type="radio" name="frequency" value="daily" <%= !values.frequency || values.frequency === 'daily' ? 'checked' : '' %>> Daily digest</label>
+        <label class="radio-line"><input type="radio" name="frequency" value="weekly" <%= values.frequency === 'weekly' ? 'checked' : '' %>> Weekly digest</label>
+      </div>
+    </div>
+
+    <button class="btn-primary block" type="submit">Create my account</button>
+    <p class="hint">Already have an account? <a href="/login">Log in</a>.</p>
+  </div>
+</form>
+
+<script>
+  (function () {
+    var radios = document.querySelectorAll('input[name="role"]');
+    var sections = document.querySelectorAll('.role-only');
+    var cards = { organizer: document.getElementById('role-card-organizer'), viewer: document.getElementById('role-card-viewer') };
+    function sync() {
+      var checked = document.querySelector('input[name="role"]:checked');
+      var role = checked ? checked.value : null;
+      sections.forEach(function (s) { s.classList.toggle('shown', s.dataset.role === role); });
+      Object.keys(cards).forEach(function (r) { cards[r].classList.toggle('selected', r === role); });
+    }
+    radios.forEach(function (r) { r.addEventListener('change', sync); });
+    sync();
+  })();
+</script>
+
+<%- include('partials/bottom') %>

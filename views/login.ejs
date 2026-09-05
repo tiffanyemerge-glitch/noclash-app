@@ -1,0 +1,26 @@
+<%- include('partials/top') %>
+
+<p class="eyebrow">Welcome back</p>
+<h2 class="section-title">Log in</h2>
+
+<% if (errors && errors.length) { %>
+  <p class="flash error"><%= errors.join(' ') %></p>
+<% } %>
+
+<form method="post" action="/login">
+  <div class="form-card" style="max-width:420px;">
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" value="<%= values.email || '' %>" required>
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required>
+    </div>
+    <button class="btn-primary block" type="submit">Log in</button>
+    <p class="hint">New here? <a href="/signup">Create an account</a>.</p>
+    <p class="hint">Demo organizer login: <code>demo-organizer@example.com</code> / <code>password123</code></p>
+  </div>
+</form>
+
+<%- include('partials/bottom') %>

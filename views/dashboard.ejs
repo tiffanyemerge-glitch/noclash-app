@@ -1,0 +1,54 @@
+<%- include('partials/top') %>
+
+<p class="eyebrow">Organizer</p>
+<h2 class="section-title">Your listings</h2>
+<p class="section-sub">Signed in as <strong><%= currentUser.orgName || currentUser.email %></strong>.</p>
+
+<div class="side-card" style="margin-bottom:24px;">
+  <% if (hasPass) { %>
+    <p><strong>Organizer Pass active</strong> &mdash; unlimited postings through <%= passActiveUntil %>.</p>
+  <% } else { %>
+    <p class="card-sub">No Organizer Pass yet. $59/year for unlimited postings.</p>
+    <form method="post" action="/dashboard/pass/activate">
+      <button class="btn-gold" type="submit">Activate demo pass</button>
+    </form>
+    <p class="hint">Demo only &mdash; no card is charged. A real build wires this to Stripe Billing.</p>
+  <% } %>
+</div>
+
+<p style="margin-bottom:16px;"><a class="btn-primary" href="/post">Post a new event</a></p>
+
+<div class="table-wrap">
+  <table class="dashboard-table">
+    <thead>
+      <tr><th>Event</th><th>Date</th><th>City</th><th>Category</th><th>Plan</th><th>Link</th><th>Status</th><th></th></tr>
+    </thead>
+    <tbody>
+      <% if (events.length === 0) { %>
+        <tr><td colspan="8">You haven't posted anything yet.</td></tr>
+      <% } %>
+      <% events.forEach(e => { %>
+        <tr>
+          <td><%= e.name %></td>
+          <td><%= e.dateLabel %></td>
+          <td><%= e.city %>, <%= e.state %></td>
+          <td><%= e.categoryLabel %></td>
+          <td><%= e.planLabel %></td>
+          <td><%= e.link ? 'Added' : 'Not added yet' %></td>
+          <td><span class="status-pill <%= e.status %>"><%= e.status %></span></td>
+          <td>
+            <a class="edit-link" href="/dashboard/events/<%= e.id %>/edit">Edit</a>
+            <% if (e.status === 'published') { %>
+              &middot;
+              <form method="post" action="/dashboard/events/<%= e.id %>/cancel" style="display:inline;" onsubmit="return confirm('Cancel this listing?');">
+                <button type="submit" class="edit-link" style="background:none;border:none;padding:0;cursor:pointer;color:var(--pin-red);">Cancel</button>
+              </form>
+            <% } %>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('partials/bottom') %>

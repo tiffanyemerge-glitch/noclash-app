@@ -1,0 +1,63 @@
+<%- include('partials/top') %>
+
+<p class="eyebrow">Simple, low-friction pricing</p>
+<h2 class="section-title">Pay per event, or go unlimited</h2>
+<p class="section-sub">Posting stays cheap enough for a one-off bake sale, with an annual pass for organizers running events all year.</p>
+
+<div class="pricing-grid">
+  <div class="plan-card">
+    <span class="tier">Basic</span>
+    <span class="price">$<%= PLANS.basic.price %></span>
+    <ul>
+      <li>One listing, live for 60 days</li>
+      <li>Edit anytime, add your link later</li>
+      <li>Included in public search &amp; alerts</li>
+    </ul>
+  </div>
+  <div class="plan-card featured">
+    <span class="tier">Standard</span>
+    <span class="price">$<%= PLANS.standard.price %></span>
+    <ul>
+      <li>Live until the day of your event</li>
+      <li>Shown in category highlights</li>
+      <li>Conflict check before you pay</li>
+    </ul>
+  </div>
+  <div class="plan-card">
+    <span class="tier">Featured</span>
+    <span class="price">$<%= PLANS.featured.price %></span>
+    <ul>
+      <li>Everything in Standard</li>
+      <li>Pinned to top of its city &amp; day for 7 days</li>
+      <li>Marked with a gold pin on the board</li>
+    </ul>
+  </div>
+  <div class="plan-card pass">
+    <span class="tier">Organizer Pass</span>
+    <span class="price">$59 <small>/ year</small></span>
+    <ul>
+      <li>Unlimited listings all year</li>
+      <li>4 featured pins included</li>
+      <li>Priority email support</li>
+    </ul>
+  </div>
+</div>
+
+<div class="compare-wrap">
+  <table class="compare">
+    <thead>
+      <tr><th>Included</th><th>Basic &middot; $1</th><th>Standard &middot; $3</th><th>Featured &middot; $5</th><th>Organizer Pass</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Listings included</td><td>1</td><td>1</td><td>1</td><td class="yes">Unlimited</td></tr>
+      <tr><td>Live through</td><td>60 days</td><td>Day of your event</td><td>Day of your event</td><td>Day of each event</td></tr>
+      <tr><td>Conflict checker &amp; calendar</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+      <tr><td>Edit &amp; add link later</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+      <tr><td>Category highlight</td><td>&mdash;</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+      <tr><td>Pinned to top 7 days</td><td>&mdash;</td><td>&mdash;</td><td class="yes">Yes</td><td class="yes">4 / year</td></tr>
+      <tr><td>Reaches interest alerts</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<%- include('partials/bottom') %>
