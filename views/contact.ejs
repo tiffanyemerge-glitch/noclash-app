@@ -1,0 +1,33 @@
+<%- include('partials/top') %>
+
+<p class="eyebrow">We'd love to hear from you</p>
+<h2 class="section-title">Contact Us</h2>
+<p class="section-sub">Questions, feedback, or help with a listing &mdash; send us a note and we'll get back to you.</p>
+
+<% if (errors && errors.length) { %>
+  <p class="flash error"><%= errors.join(' ') %></p>
+<% } %>
+
+<form method="post" action="/contact">
+  <div class="form-card" style="max-width:560px;">
+    <div class="field">
+      <label for="name">Name</label>
+      <input type="text" id="name" name="name" value="<%= values.name || '' %>" required>
+    </div>
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" value="<%= values.email || '' %>" required>
+    </div>
+    <div class="field">
+      <label for="phone">Phone number</label>
+      <input type="tel" id="phone" name="phone" value="<%= values.phone || '' %>" required>
+    </div>
+    <div class="field">
+      <label for="message">Message (optional)</label>
+      <textarea id="message" name="message" rows="5"><%= values.message || '' %></textarea>
+    </div>
+    <button class="btn-primary block" type="submit">Send message</button>
+  </div>
+</form>
+
+<%- include('partials/bottom') %>
