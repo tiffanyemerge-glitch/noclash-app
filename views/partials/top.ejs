@@ -4,14 +4,20 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><%= title %> &middot; NoClash</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="alternate icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
 <div class="app">
   <header class="topbar">
     <a class="brand" href="/">
-      <span class="brand-mark">NoClash</span>
-      <span class="brand-tag">see what's already on the books &mdash; before you pick a date</span>
+      <img class="brand-logo" src="/logo.svg" alt="NoClash logo">
+      <span class="brand-text">
+        <span class="brand-mark">NoClash</span>
+        <span class="brand-tag">see what's already on the books &mdash; before you pick a date</span>
+      </span>
     </a>
     <nav class="nav">
       <a class="nav-link <%= currentPath === '/' ? 'active' : '' %>" href="/">Home</a>
