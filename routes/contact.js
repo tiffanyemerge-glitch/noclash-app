@@ -22,10 +22,12 @@ router.post('/contact', async (req, res) => {
   }
 
   try {
-    await mailer.sendContactMessage({ name, email, phone, message });
+    const info = await mailer.sendContactMessage({ name, email, phone, message });
+    console.log('[contact] send result:', info);
     req.session.flash = "Thanks — we've got your message and will get back to you soon.";
     res.redirect('/contact');
   } catch (err) {
+    console.error('[contact] send failed:', (err && err.stack) || err);
     res.render('contact', {
       title: 'Contact Us',
       values: { name, email, phone, message },
