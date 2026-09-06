@@ -1,3 +1,5 @@
+require('./lib/loadEnv')();
+
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
@@ -39,6 +41,7 @@ app.use('/', require('./routes/auth'));
 app.use('/', require('./routes/post'));
 app.use('/', require('./routes/dashboard'));
 app.use('/', require('./routes/account'));
+app.use('/', require('./routes/contact'));
 
 app.use((req, res) => {
   res.status(404).render('404', { title: 'Not Found' });
