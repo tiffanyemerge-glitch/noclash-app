@@ -22,7 +22,10 @@ function qs(overrides) {
     <form method="get" action="/post" style="display:flex; gap:8px; margin-bottom:16px;">
       <input type="hidden" name="month" value="<%= monthParam %>">
       <input type="text" name="city" value="<%= city %>" placeholder="City" required style="flex:1; padding:10px 11px; border-radius:8px; border:1px solid var(--line); background:var(--surface); font-family:'IBM Plex Mono',monospace;">
-      <input type="text" name="state" value="<%= state %>" placeholder="ST" maxlength="2" required style="width:64px; padding:10px 11px; border-radius:8px; border:1px solid var(--line); background:var(--surface); font-family:'IBM Plex Mono',monospace; text-transform:uppercase;">
+      <select name="state" required style="width:96px; padding:10px 11px; border-radius:8px; border:1px solid var(--line); background:var(--surface); font-family:'IBM Plex Mono',monospace;">
+        <option value="" disabled <%= state ? '' : 'selected' %>>State</option>
+        <% usStates.forEach(s => { %><option value="<%= s.value %>" <%= state === s.value ? 'selected' : '' %>><%= s.value %></option><% }) %>
+      </select>
       <button class="btn-primary" type="submit">Check</button>
     </form>
 
@@ -58,6 +61,29 @@ function qs(overrides) {
               <div class="conflict-item"><span><%= e.name %></span><span class="time"><%= e.timeLabel %></span></div>
             <% }) %>
             <p class="conflict-note">This won't stop your listing &mdash; it's here so you can spread events out if you'd rather not compete for the same crowd.</p>
+          <% } %>
+        </div>
+
+        <div class="side-card" style="margin-top:12px;">
+          <h3 style="font-size:0.95rem;">Also happening outside NoClash</h3>
+          <% if (!ticketmasterConfigured) { %>
+            <p class="hint">Not set up yet. Add a free <code>TICKETMASTER_API_KEY</code> in <code>.env</code> to check Ticketmaster for other ticketed events that day &mdash; see README.md. (Eventbrite can't be checked this way: they shut off public search access to third-party apps in 2020.)</p>
+          <% } else { %>
+            <% externalResults.forEach(result => { %>
+              <% if (result.error) { %>
+                <p class="hint"><%= result.provider %>: <%= result.error %></p>
+              <% } else if (result.events.length === 0) { %>
+                <p class="hint">Nothing found on <%= result.provider %> for <%= city %>, <%= state %> that day.</p>
+              <% } else { %>
+                <p class="card-sub"><%= result.events.length %> ticketed event<%= result.events.length > 1 ? 's' : '' %> on <%= result.provider %> that day (not a NoClash listing, so it won't stop you from posting):</p>
+                <% result.events.forEach(e => { %>
+                  <div class="conflict-item">
+                    <span><a class="link" href="<%= e.url %>" target="_blank" rel="noopener"><%= e.name %></a><% if (e.venue) { %> &middot; <%= e.venue %><% } %></span>
+                    <span class="time"><%= e.timeLabel || '' %></span>
+                  </div>
+                <% }) %>
+              <% } %>
+            <% }) %>
           <% } %>
         </div>
       <% } else { %>
@@ -128,13 +154,18 @@ function qs(overrides) {
               <span class="price">included</span>
             </label>
           </div>
-          <% if (!hasPass) { %><p class="hint">Don't have a pass yet? <a href="/dashboard">Activate the demo pass</a> from your dashboard.</p><% } %>
+          <% if (!hasPass) { %><p class="hint">Don't have a pass yet? <a href="/dashboard"><%= stripeConfigured ? 'Buy one' : 'Activate the demo pass' %></a> from your dashboard.</p><% } %>
           <div class="total-row">
             <span>Total due today</span>
             <span class="amount" id="post-total">$<%= PLANS.standard.price %>.00</span>
           </div>
           <p class="total-hint" id="post-duration-note">Live until the day of your event.</p>
-          <button class="btn-primary block" type="submit" <%= selectedDate ? '' : 'disabled' %>>Reserve this listing</button>
+          <% if (stripeConfigured) { %>
+            <p class="hint">You'll be taken to Stripe to pay securely — your listing goes live once the payment clears.</p>
+          <% } else { %>
+            <p class="hint">Demo mode &mdash; payments aren't set up, so nothing will actually be charged. See README.md to turn on real checkout.</p>
+          <% } %>
+          <button class="btn-primary block" type="submit" <%= selectedDate ? '' : 'disabled' %>><%= stripeConfigured ? 'Continue to payment' : 'Reserve this listing' %></button>
         </div>
       </form>
     </div>
