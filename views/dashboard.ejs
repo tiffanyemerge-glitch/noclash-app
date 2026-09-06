@@ -8,9 +8,9 @@
   <% if (hasPass) { %>
     <p><strong>Organizer Pass active</strong> &mdash; unlimited postings through <%= passActiveUntil %>.</p>
   <% } else { %>
-    <p class="card-sub">No Organizer Pass yet. $59/year for unlimited postings.</p>
+    <p class="card-sub">No Organizer Pass yet. $49/year for unlimited postings.</p>
     <form method="post" action="/dashboard/pass/activate">
-      <button class="btn-gold" type="submit"><%= stripeConfigured ? 'Buy Organizer Pass — $59' : 'Activate demo pass' %></button>
+      <button class="btn-gold" type="submit"><%= stripeConfigured ? 'Buy Organizer Pass — $49' : 'Activate demo pass' %></button>
     </form>
     <% if (stripeConfigured) { %>
       <p class="hint">Takes you to Stripe to pay securely. Renews aren't automatic yet &mdash; you'll buy again next year.</p>
