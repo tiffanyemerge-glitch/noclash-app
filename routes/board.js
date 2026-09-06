@@ -78,6 +78,7 @@ router.get('/board', (req, res) => {
     filters,
     cities,
     states,
+    usStates: db.US_STATES,
     dates: dates.map((d) => ({ value: d, label: fmtDate(d) })),
     categories: db.CATEGORIES,
     view,
