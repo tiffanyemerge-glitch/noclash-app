@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="noclashLogoTitle">
+  <title id="noclashLogoTitle">NoClash</title>
+  <!-- corkboard square -->
+  <rect x="2" y="2" width="60" height="60" rx="13" fill="#2f4538"/>
+  <rect x="2" y="2" width="60" height="60" rx="13" fill="none" stroke="#1a2a20" stroke-width="1"/>
+
+  <!-- back flyer, tucked behind, slightly rotated -->
+  <g transform="translate(32,34) rotate(-9)">
+    <rect x="-15" y="-16" width="30" height="26" rx="2" fill="#e7d4cd" opacity="0.55"/>
+  </g>
+
+  <!-- front flyer -->
+  <g transform="translate(30,33) rotate(6)">
+    <rect x="-16" y="-17" width="32" height="28" rx="2" fill="#f5efe0" stroke="#221f18" stroke-opacity="0.15" stroke-width="1"/>
+    <line x1="-10" y1="-8" x2="10" y2="-8" stroke="#5c5748" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
+    <line x1="-10" y1="-1" x2="10" y2="-1" stroke="#5c5748" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
+    <line x1="-10" y1="6" x2="2" y2="6" stroke="#5c5748" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
+  </g>
+
+  <!-- pushpin -->
+  <g transform="translate(30,17)">
+    <circle cx="0" cy="2" r="7" fill="#000" opacity="0.18"/>
+    <circle cx="0" cy="0" r="7" fill="#b9862e"/>
+    <circle cx="0" cy="0" r="7" fill="none" stroke="#7a5a1e" stroke-width="1"/>
+    <circle cx="-2.3" cy="-2.3" r="2.1" fill="#ecdcb9" opacity="0.85"/>
+    <circle cx="0" cy="0" r="2.6" fill="#b8402a"/>
+  </g>
+</svg>
