@@ -56,6 +56,15 @@ router.get('/board', asyncRoute(async (req, res) => {
     publicEvents: []
   }));
 
+  // month grid for the calendar view — respects the same filters minus the date filter.
+  // Computed up front (rather than down by the grid itself) so the Public Search lookup
+  // below can scope its Ticketmaster query to whichever month is actually being displayed.
+  const today = new Date();
+  const monthParam = req.query.month; // "YYYY-MM"
+  const [year, month] = monthParam && /^\d{4}-\d{2}$/.test(monthParam)
+    ? [Number(monthParam.slice(0, 4)), Number(monthParam.slice(5, 7)) - 1]
+    : [today.getFullYear(), today.getMonth()];
+
   // Public Search: once someone has picked one specific city + state, look up what's
   // already scheduled on Ticketmaster there and show it alongside NoClash's own listings,
   // tagged "Public Search." This is a live lookup on every request — nothing is imported
@@ -66,7 +75,22 @@ router.get('/board', asyncRoute(async (req, res) => {
     publicSearch.active = true;
     publicSearch.city = filters.city;
     publicSearch.state = filters.state;
-    const result = await checkTicketmasterCity({ city: filters.city, state: filters.state });
+    // The list view's default is a rolling "next 90 days" lookup capped at 40 results,
+    // which is plenty for a quick browse but runs out well before 90 days are up in a
+    // busy city — so paging the calendar forward past that point showed nothing, not
+    // because there was nothing on, but because the batch never reached that month. The
+    // calendar view knows exactly which month it's showing, so scope the Ticketmaster
+    // query to that month's own date range instead: every month gets its own accurate
+    // lookup, however far out someone navigates.
+    const tmOptions = { city: filters.city, state: filters.state };
+    if (view === 'calendar') {
+      const monthStart = new Date(year, month, 1);
+      const monthEnd = new Date(year, month + 1, 0, 23, 59, 59);
+      tmOptions.startDate = monthStart > today ? monthStart : today;
+      tmOptions.endDate = monthEnd;
+      tmOptions.size = 200; // Ticketmaster Discovery API's max page size — one city/month won't exceed it
+    }
+    const result = await checkTicketmasterCity(tmOptions);
     publicSearch.configured = result.configured;
     publicSearch.error = result.error;
 
@@ -95,13 +119,6 @@ router.get('/board', asyncRoute(async (req, res) => {
     g.publicEvents = (publicByDate[g.date] || []).map((e) => ({ ...e, timeLabel: e.timeLabel || 'Time TBA' }));
   });
   const publicCount = Object.values(publicByDate).reduce((sum, arr) => sum + arr.length, 0);
-
-  // month grid for the calendar view — respects the same filters minus the date filter
-  const today = new Date();
-  const monthParam = req.query.month; // "YYYY-MM"
-  const [year, month] = monthParam && /^\d{4}-\d{2}$/.test(monthParam)
-    ? [Number(monthParam.slice(0, 4)), Number(monthParam.slice(5, 7)) - 1]
-    : [today.getFullYear(), today.getMonth()];
 
   const counts = monthCounts(events, year, month, { city: filters.city, state: filters.state, category: filters.category });
   const firstDow = new Date(year, month, 1).getDay();
