@@ -133,7 +133,9 @@ section.block:first-of-type { margin-top: 30px; }
 
 /* ---------- BOARD ---------- */
 .filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; align-items: center; }
-.filters select { font-family: 'IBM Plex Mono', monospace; font-size: 0.82rem; padding: 8px 10px; border-radius: 7px; border: 1px solid var(--line); background: var(--paper-soft); color: var(--ink); }
+.filters select, .filters input[type="text"] { font-family: 'IBM Plex Mono', monospace; font-size: 0.82rem; padding: 8px 10px; border-radius: 7px; border: 1px solid var(--line); background: var(--paper-soft); color: var(--ink); }
+.filters input[type="text"] { width: 140px; }
+.filters input[type="text"]::placeholder { color: var(--ink-soft); opacity: 0.7; }
 .filters .count { margin-left: auto; font-size: 0.8rem; color: var(--ink-soft); font-family: 'IBM Plex Mono', monospace; }
 
 .view-toggle { display: flex; gap: 6px; margin-bottom: 18px; }
@@ -149,15 +151,18 @@ section.block:first-of-type { margin-top: 30px; }
 .cluster-flag { display: inline-flex; align-items: center; gap: 6px; font-size: 0.76rem; font-weight: 600; padding: 4px 10px 4px 8px; border-radius: 999px; margin: 0 0 8px 2px; }
 .cluster-flag.clash { background: var(--pin-red-soft); color: var(--pin-red); }
 .cluster-flag.clear { background: var(--ok-green-soft); color: var(--ok-green); }
+.cluster-flag.public { background: var(--pin-gold-soft); color: var(--pin-gold); }
 
 .card-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
 .flyer { position: relative; background: var(--paper); border-radius: 3px; padding: 16px 16px 14px; box-shadow: 0 10px 20px var(--shadow); }
 .flyer:nth-child(3n+1) { transform: rotate(-1.1deg); }
 .flyer:nth-child(3n+2) { transform: rotate(0.8deg); }
 .flyer:nth-child(3n+3) { transform: rotate(-0.4deg); }
+.flyer.public-flyer { border: 1px dashed var(--pin-gold); }
 .pin { position: absolute; top: -9px; left: 50%; transform: translateX(-50%); width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 3px 4px rgba(0,0,0,0.4); }
 .pin.red { background: radial-gradient(circle at 35% 30%, #e8836a, var(--pin-red)); }
 .pin.green { background: radial-gradient(circle at 35% 30%, #86c194, var(--ok-green)); }
+.pin.gold { background: radial-gradient(circle at 35% 30%, #e3c27a, var(--pin-gold)); }
 .flyer .cat { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); display: block; margin-bottom: 6px; }
 .flyer h3 { font-size: 1.05rem; margin: 0 0 8px; color: var(--ink); line-height: 1.25; }
 .flyer .meta { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--ink-soft); display: flex; flex-direction: column; gap: 2px; }
