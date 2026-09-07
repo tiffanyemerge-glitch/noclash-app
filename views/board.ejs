@@ -14,15 +14,15 @@ function qs(overrides) {
 
 <p class="eyebrow">Public &middot; free to browse</p>
 <h2 class="section-title">What's happening, and where it overlaps</h2>
-<p class="section-sub">Every listing is pinned by day and city. A red pin means more than one event is already booked that day in that town — a green pin means the coast is clear.</p>
+<p class="section-sub">Every listing is pinned by day and city. A red pin means more than one event is already booked that day in that town — a green pin means the coast is clear. Pick one city and state below to also pull in real, already-scheduled events there from Ticketmaster, tagged <strong>Public Search</strong>.</p>
 
 <form class="filters" method="get" action="/board">
   <input type="hidden" name="view" value="<%= view %>">
   <input type="hidden" name="month" value="<%= monthParam %>">
-  <select name="city" onchange="this.form.submit()">
-    <option value="all" <%= filters.city === 'all' ? 'selected' : '' %>>All cities</option>
-    <% cities.forEach(c => { %><option value="<%= c %>" <%= filters.city === c ? 'selected' : '' %>><%= c %></option><% }) %>
-  </select>
+  <input type="text" name="city" list="city-suggestions" placeholder="Any city" value="<%= filters.city === 'all' ? '' : filters.city %>">
+  <datalist id="city-suggestions">
+    <% cities.forEach(c => { %><option value="<%= c %>"><% }) %>
+  </datalist>
   <select name="state" onchange="this.form.submit()">
     <option value="all" <%= filters.state === 'all' ? 'selected' : '' %>>All states</option>
     <% usStates.forEach(s => { %><option value="<%= s.value %>" <%= filters.state === s.value ? 'selected' : '' %>><%= s.label %> (<%= s.value %>)</option><% }) %>
@@ -35,9 +35,15 @@ function qs(overrides) {
     <option value="all" <%= filters.category === 'all' ? 'selected' : '' %>>All categories</option>
     <% categories.forEach(c => { %><option value="<%= c.value %>" <%= filters.category === c.value ? 'selected' : '' %>><%= c.label %></option><% }) %>
   </select>
-  <noscript><button class="btn-primary" type="submit">Apply filters</button></noscript>
-  <span class="count"><%= count %> event<%= count === 1 ? '' : 's' %></span>
+  <button class="btn-primary" type="submit">Apply filters</button>
+  <span class="count"><%= count %> event<%= count === 1 ? '' : 's' %><% if (publicSearch.active && publicSearch.configured && !publicSearch.error) { %> &middot; <%= publicCount %> public search result<%= publicCount === 1 ? '' : 's' %><% } %></span>
 </form>
+
+<% if (publicSearch.active && !publicSearch.configured) { %>
+  <p class="flash">Public search isn't set up on this deployment yet.</p>
+<% } else if (publicSearch.active && publicSearch.error) { %>
+  <p class="flash error">Public search: <%= publicSearch.error %></p>
+<% } %>
 
 <div class="view-toggle">
   <a class="view-btn <%= view === 'list' ? 'active' : '' %>" href="/board?<%= qs({ view: 'list' }) %>">List view</a>
@@ -70,6 +76,22 @@ function qs(overrides) {
             </div>
           </div>
         <% }) %>
+        <% if (g.publicEvents && g.publicEvents.length) { %>
+          <div class="city-cluster">
+            <span class="cluster-flag public">&#128269; Public Search &middot; <%= publicSearch.city %>, <%= publicSearch.state %></span>
+            <div class="card-row">
+              <% g.publicEvents.forEach(e => { %>
+                <article class="flyer public-flyer">
+                  <span class="pin gold"></span>
+                  <span class="cat">Public Search &middot; Ticketmaster</span>
+                  <h3><%= e.name %></h3>
+                  <div class="meta"><% if (e.venue) { %><span><%= e.venue %></span><% } %><span><%= e.timeLabel %></span></div>
+                  <% if (e.url) { %><a class="link" href="<%= e.url %>" target="_blank" rel="noopener">View event &rarr;</a><% } else { %><span class="no-link">Details coming soon</span><% } %>
+                </article>
+              <% }) %>
+            </div>
+          </div>
+        <% } %>
       </div>
     <% }) %>
   </div>
@@ -96,15 +118,23 @@ function qs(overrides) {
       <span><span class="sw busy"></span>2+ events</span>
     </div>
     <% if (selectedDate) { %>
-      <div class="conflict-box <%= detail.length === 0 ? 'clear' : '' %>">
-        <% if (detail.length === 0) { %>
+      <div class="conflict-box <%= (detail.length === 0 && detailPublic.length === 0) ? 'clear' : '' %>">
+        <% if (detail.length === 0 && detailPublic.length === 0) { %>
           <p class="lead clear">Nothing booked on <%= selectedDateLabel %></p>
           <p class="conflict-note">Clear day, given the filters above.</p>
         <% } else { %>
-          <p class="lead"><%= detail.length %> event<%= detail.length > 1 ? 's' : '' %> on <%= selectedDateLabel %></p>
-          <% detail.forEach(e => { %>
-            <div class="conflict-item"><span><%= e.name %> &middot; <%= e.city %>, <%= e.state %></span><span class="time"><%= e.timeLabel %></span></div>
-          <% }) %>
+          <% if (detail.length) { %>
+            <p class="lead"><%= detail.length %> event<%= detail.length > 1 ? 's' : '' %> on <%= selectedDateLabel %></p>
+            <% detail.forEach(e => { %>
+              <div class="conflict-item"><span><%= e.name %> &middot; <%= e.city %>, <%= e.state %></span><span class="time"><%= e.timeLabel %></span></div>
+            <% }) %>
+          <% } %>
+          <% if (detailPublic.length) { %>
+            <p class="lead" <% if (detail.length) { %>style="margin-top: 14px;"<% } %>>&#128269; <%= detailPublic.length %> public search result<%= detailPublic.length > 1 ? 's' : '' %></p>
+            <% detailPublic.forEach(e => { %>
+              <div class="conflict-item"><span><%= e.name %><% if (e.venue) { %> &middot; <%= e.venue %><% } %></span><span class="time"><%= e.timeLabel %></span></div>
+            <% }) %>
+          <% } %>
         <% } %>
       </div>
     <% } else { %>
