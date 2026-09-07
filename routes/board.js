@@ -2,6 +2,7 @@ const express = require('express');
 const db = require('../lib/db');
 const { monthCounts, groupByDateThenCity } = require('../lib/availability');
 const { asyncRoute } = require('../lib/asyncRoute');
+const { checkTicketmasterCity } = require('../lib/externalEvents');
 const router = express.Router();
 
 function fmtDate(iso) {
@@ -16,25 +17,28 @@ function fmtTime(hhmm) {
   const hour12 = ((h + 11) % 12) + 1;
   return `${hour12}:${String(m).padStart(2, '0')} ${period}`;
 }
+function sameCity(a, b) {
+  return a.trim().toLowerCase() === b.trim().toLowerCase();
+}
 
 router.get('/board', asyncRoute(async (req, res) => {
   const events = await db.publishedEvents();
 
   const filters = {
-    city: req.query.city || 'all',
+    city: (req.query.city || '').trim() || 'all',
     state: req.query.state || 'all',
     date: req.query.date || 'all',
     category: req.query.category || 'all'
   };
   const view = req.query.view === 'calendar' ? 'calendar' : 'list';
 
-  // dropdown option lists, built from whatever is actually on the board
+  // dropdown/suggestion lists, built from whatever is actually on the board
   const cities = [...new Set(events.map((e) => e.city))].sort();
   const states = [...new Set(events.map((e) => e.state))].sort();
   const dates = [...new Set(events.map((e) => e.date))].sort();
 
   const filtered = events.filter((e) => {
-    if (filters.city !== 'all' && e.city !== filters.city) return false;
+    if (filters.city !== 'all' && !sameCity(e.city, filters.city)) return false;
     if (filters.state !== 'all' && e.state !== filters.state) return false;
     if (filters.date !== 'all' && e.date !== filters.date) return false;
     if (filters.category !== 'all' && e.category !== filters.category) return false;
@@ -48,8 +52,49 @@ router.get('/board', asyncRoute(async (req, res) => {
       cityKey: c.cityKey,
       clash: c.events.length > 1,
       events: c.events.map((e) => ({ ...e, timeLabel: fmtTime(e.startTime), categoryLabel: db.categoryLabel(e.category) }))
-    }))
+    })),
+    publicEvents: []
   }));
+
+  // Public Search: once someone has picked one specific city + state, look up what's
+  // already scheduled on Ticketmaster there and show it alongside NoClash's own listings,
+  // tagged "Public Search." This is a live lookup on every request — nothing is imported
+  // or stored, so there's no background job and no new table to keep in sync.
+  const publicSearch = { active: false, configured: true, error: null, city: null, state: null };
+  const publicByDate = {};
+  if (filters.city !== 'all' && filters.state !== 'all') {
+    publicSearch.active = true;
+    publicSearch.city = filters.city;
+    publicSearch.state = filters.state;
+    const result = await checkTicketmasterCity({ city: filters.city, state: filters.state });
+    publicSearch.configured = result.configured;
+    publicSearch.error = result.error;
+
+    let publicEvents = result.events;
+    if (filters.date !== 'all') publicEvents = publicEvents.filter((e) => e.date === filters.date);
+    // Ticketmaster results aren't sorted into NoClash's own categories, so a category
+    // filter (which only makes sense for organizer listings) hides them rather than guess.
+    if (filters.category !== 'all') publicEvents = [];
+
+    publicEvents.forEach((e) => {
+      if (!publicByDate[e.date]) publicByDate[e.date] = [];
+      publicByDate[e.date].push(e);
+    });
+  }
+
+  // fold in any dates that only have public results, no organizer listings yet
+  const groupDates = new Set(groups.map((g) => g.date));
+  Object.keys(publicByDate).forEach((date) => {
+    if (!groupDates.has(date)) {
+      groups.push({ date, dateLabel: fmtDate(date), cities: [], publicEvents: [] });
+      groupDates.add(date);
+    }
+  });
+  groups.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  groups.forEach((g) => {
+    g.publicEvents = (publicByDate[g.date] || []).map((e) => ({ ...e, timeLabel: e.timeLabel || 'Time TBA' }));
+  });
+  const publicCount = Object.values(publicByDate).reduce((sum, arr) => sum + arr.length, 0);
 
   // month grid for the calendar view — respects the same filters minus the date filter
   const today = new Date();
@@ -69,6 +114,7 @@ router.get('/board', asyncRoute(async (req, res) => {
   }
   const selectedDate = filters.date !== 'all' && filters.date.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`) ? filters.date : null;
   const detail = selectedDate ? filtered.filter((e) => e.date === selectedDate) : [];
+  const detailPublic = selectedDate ? (publicByDate[selectedDate] || []).map((e) => ({ ...e, timeLabel: e.timeLabel || 'Time TBA' })) : [];
 
   const prevMonth = new Date(year, month - 1, 1);
   const nextMonth = new Date(year, month + 1, 1);
@@ -85,6 +131,8 @@ router.get('/board', asyncRoute(async (req, res) => {
     view,
     groups,
     count: filtered.length,
+    publicSearch,
+    publicCount,
     calDays,
     monthLabel,
     monthParam: `${year}-${String(month + 1).padStart(2, '0')}`,
@@ -92,7 +140,8 @@ router.get('/board', asyncRoute(async (req, res) => {
     nextMonthParam: `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}`,
     selectedDate,
     selectedDateLabel: selectedDate ? fmtDateLong(selectedDate) : null,
-    detail: detail.map((e) => ({ ...e, timeLabel: fmtTime(e.startTime), categoryLabel: db.categoryLabel(e.category) }))
+    detail: detail.map((e) => ({ ...e, timeLabel: fmtTime(e.startTime), categoryLabel: db.categoryLabel(e.category) })),
+    detailPublic
   });
 }));
 
