@@ -107,8 +107,8 @@ function qs(overrides) {
       <% calDays.forEach(d => { %>
         <% if (!d) { %><span class="cal-day cal-blank"></span>
         <% } else { %>
-          <a class="cal-day <%= d.count >= 2 ? 'busy' : d.count === 1 ? 'one' : '' %> <%= d.date === selectedDate ? 'selected' : '' %>"
-             href="/board?<%= qs({ date: d.date }) %>"><%= d.day %><% if (d.count >= 2) { %><b><%= d.count %></b><% } %></a>
+          <a class="cal-day <%= d.count >= 2 ? 'busy' : d.count === 1 ? 'one' : '' %> <%= d.publicCount > 0 ? 'has-public' : '' %> <%= d.date === selectedDate ? 'selected' : '' %>"
+             href="/board?<%= qs({ date: d.date }) %>"><%= d.day %><% if (d.publicCount > 0) { %><i class="pub-dot" title="<%= d.publicCount %> public search result<%= d.publicCount === 1 ? '' : 's' %>"></i><% } %><% if (d.count >= 2) { %><b><%= d.count %></b><% } %></a>
         <% } %>
       <% }) %>
     </div>
@@ -116,6 +116,9 @@ function qs(overrides) {
       <span><span class="sw open"></span>Nothing booked</span>
       <span><span class="sw one"></span>1 event</span>
       <span><span class="sw busy"></span>2+ events</span>
+      <% if (publicSearch.active && publicSearch.configured && !publicSearch.error) { %>
+        <span><span class="sw public"></span>Public search result<%= publicCount === 1 ? '' : 's' %></span>
+      <% } %>
     </div>
     <% if (selectedDate) { %>
       <div class="conflict-box <%= (detail.length === 0 && detailPublic.length === 0) ? 'clear' : '' %>">
