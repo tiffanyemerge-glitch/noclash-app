@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../lib/db');
 const { monthCounts, groupByDateThenCity } = require('../lib/availability');
+const { asyncRoute } = require('../lib/asyncRoute');
 const router = express.Router();
 
 function fmtDate(iso) {
@@ -16,8 +17,8 @@ function fmtTime(hhmm) {
   return `${hour12}:${String(m).padStart(2, '0')} ${period}`;
 }
 
-router.get('/board', (req, res) => {
-  const events = db.publishedEvents();
+router.get('/board', asyncRoute(async (req, res) => {
+  const events = await db.publishedEvents();
 
   const filters = {
     city: req.query.city || 'all',
@@ -93,6 +94,6 @@ router.get('/board', (req, res) => {
     selectedDateLabel: selectedDate ? fmtDateLong(selectedDate) : null,
     detail: detail.map((e) => ({ ...e, timeLabel: fmtTime(e.startTime), categoryLabel: db.categoryLabel(e.category) }))
   });
-});
+}));
 
 module.exports = router;
