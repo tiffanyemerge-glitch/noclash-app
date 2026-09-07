@@ -110,7 +110,7 @@ router.get('/board', asyncRoute(async (req, res) => {
   for (let i = 0; i < firstDow; i++) calDays.push(null);
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-    calDays.push({ day: d, date: dateStr, count: counts[dateStr] || 0 });
+    calDays.push({ day: d, date: dateStr, count: counts[dateStr] || 0, publicCount: (publicByDate[dateStr] || []).length });
   }
   const selectedDate = filters.date !== 'all' && filters.date.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`) ? filters.date : null;
   const detail = selectedDate ? filtered.filter((e) => e.date === selectedDate) : [];
