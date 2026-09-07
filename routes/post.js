@@ -4,6 +4,7 @@ const { requireRole } = require('../lib/auth');
 const { eventsOnDate, monthCounts } = require('../lib/availability');
 const { checkExternalProviders, ticketmasterConfigured } = require('../lib/externalEvents');
 const payments = require('../lib/payments');
+const { asyncRoute } = require('../lib/asyncRoute');
 const router = express.Router();
 
 function fmtTime(hhmm) {
@@ -16,7 +17,7 @@ function fmtDateLong(iso) {
   return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 }
 
-router.get('/post', requireRole('organizer'), async (req, res) => {
+router.get('/post', requireRole('organizer'), asyncRoute(async (req, res) => {
   const city = (req.query.city || '').trim();
   const state = (req.query.state || '').trim().toUpperCase();
   const today = new Date();
@@ -31,7 +32,7 @@ router.get('/post', requireRole('organizer'), async (req, res) => {
   let externalResults = [];
 
   if (city && state) {
-    const events = db.publishedEvents();
+    const events = await db.publishedEvents();
     const counts = monthCounts(events, year, month, { city, state });
     const firstDow = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -79,9 +80,9 @@ router.get('/post', requireRole('organizer'), async (req, res) => {
     values: {},
     errors: req.query.error ? [req.query.error] : []
   });
-});
+}));
 
-router.post('/post', requireRole('organizer'), async (req, res) => {
+router.post('/post', requireRole('organizer'), asyncRoute(async (req, res) => {
   const { name, date, city, state, startTime, category, link, plan } = req.body;
   const noLink = req.body.noLink === 'on';
   const errors = [];
@@ -117,14 +118,14 @@ router.post('/post', requireRole('organizer'), async (req, res) => {
 
   // covered by an existing pass — no charge, post it right away
   if (plan === 'pass') {
-    const event = db.createEvent(pendingEvent);
+    const event = await db.createEvent(pendingEvent);
     req.session.flash = `"${event.name}" is posted — covered by your Organizer Pass.`;
     return res.redirect('/dashboard');
   }
 
   // payments aren't set up — keep the old demo behavior so the app still works without Stripe
   if (!payments.isConfigured()) {
-    const event = db.createEvent(pendingEvent);
+    const event = await db.createEvent(pendingEvent);
     req.session.flash = `"${event.name}" is posted. (Demo mode — payments aren't configured yet, so $${db.PLANS[plan].price} was not actually charged. See README.md to turn on real checkout.)`;
     return res.redirect('/dashboard');
   }
@@ -146,12 +147,12 @@ router.post('/post', requireRole('organizer'), async (req, res) => {
   } catch (err) {
     backToPost(`Could not start checkout: ${err.message}`);
   }
-});
+}));
 
 // Stripe sends the organizer back here after Checkout. We don't trust the redirect by
 // itself — we ask Stripe directly (with the secret key) whether this session was actually
 // paid before creating the listing.
-router.get('/post/confirm', requireRole('organizer'), async (req, res) => {
+router.get('/post/confirm', requireRole('organizer'), asyncRoute(async (req, res) => {
   const sessionId = req.query.session_id;
   const pending = req.session.pendingEvent;
 
@@ -168,7 +169,7 @@ router.get('/post/confirm', requireRole('organizer'), async (req, res) => {
       req.session.flashType = 'error';
       return res.redirect('/post');
     }
-    const event = db.createEvent(pending);
+    const event = await db.createEvent(pending);
     delete req.session.pendingEvent;
     req.session.flash = `"${event.name}" is posted — $${(checkoutSession.amount_total / 100).toFixed(2)} charged.`;
     res.redirect('/dashboard');
@@ -177,6 +178,6 @@ router.get('/post/confirm', requireRole('organizer'), async (req, res) => {
     req.session.flashType = 'error';
     res.redirect('/post');
   }
-});
+}));
 
 module.exports = router;
