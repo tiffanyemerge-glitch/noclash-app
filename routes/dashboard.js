@@ -2,15 +2,15 @@ const express = require('express');
 const db = require('../lib/db');
 const { requireRole } = require('../lib/auth');
 const payments = require('../lib/payments');
+const { asyncRoute } = require('../lib/asyncRoute');
 const router = express.Router();
 
 function fmtDate(iso) {
   return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-router.get('/dashboard', requireRole('organizer'), (req, res) => {
-  const events = db
-    .eventsForOrganizer(res.locals.currentUser.id)
+router.get('/dashboard', requireRole('organizer'), asyncRoute(async (req, res) => {
+  const events = (await db.eventsForOrganizer(res.locals.currentUser.id))
     .slice()
     .sort((a, b) => (a.date < b.date ? -1 : 1))
     .map((e) => ({ ...e, dateLabel: fmtDate(e.date), categoryLabel: db.categoryLabel(e.category), planLabel: db.PLANS[e.plan].label }));
@@ -23,13 +23,13 @@ router.get('/dashboard', requireRole('organizer'), (req, res) => {
     passActiveUntil: user.passActiveUntil ? fmtDate(user.passActiveUntil) : null,
     stripeConfigured: payments.isConfigured()
   });
-});
+}));
 
-router.post('/dashboard/pass/activate', requireRole('organizer'), async (req, res) => {
+router.post('/dashboard/pass/activate', requireRole('organizer'), asyncRoute(async (req, res) => {
   // payments aren't set up — keep the free demo activation so the app still works without Stripe
   if (!payments.isConfigured()) {
     const oneYearOut = db.addDays(db.todayISO(), 365);
-    db.updateUser(res.locals.currentUser.id, { passActiveUntil: oneYearOut });
+    await db.updateUser(res.locals.currentUser.id, { passActiveUntil: oneYearOut });
     req.session.flash = 'Organizer Pass activated. (Demo mode — payments aren\'t configured yet, so no card was charged. See README.md.)';
     return res.redirect('/dashboard');
   }
@@ -47,9 +47,9 @@ router.post('/dashboard/pass/activate', requireRole('organizer'), async (req, re
     req.session.flashType = 'error';
     res.redirect('/dashboard');
   }
-});
+}));
 
-router.get('/dashboard/pass/confirm', requireRole('organizer'), async (req, res) => {
+router.get('/dashboard/pass/confirm', requireRole('organizer'), asyncRoute(async (req, res) => {
   const sessionId = req.query.session_id;
   if (!sessionId) return res.redirect('/dashboard');
 
@@ -61,7 +61,7 @@ router.get('/dashboard/pass/confirm', requireRole('organizer'), async (req, res)
       return res.redirect('/dashboard');
     }
     const oneYearOut = db.addDays(db.todayISO(), 365);
-    db.updateUser(res.locals.currentUser.id, { passActiveUntil: oneYearOut });
+    await db.updateUser(res.locals.currentUser.id, { passActiveUntil: oneYearOut });
     req.session.flash = `Organizer Pass activated — $${(checkoutSession.amount_total / 100).toFixed(2)} charged. Unlimited postings for the next year.`;
     res.redirect('/dashboard');
   } catch (err) {
@@ -69,19 +69,19 @@ router.get('/dashboard/pass/confirm', requireRole('organizer'), async (req, res)
     req.session.flashType = 'error';
     res.redirect('/dashboard');
   }
-});
+}));
 
-router.get('/dashboard/events/:id/edit', requireRole('organizer'), (req, res) => {
-  const event = db.eventsForOrganizer(res.locals.currentUser.id).find((e) => e.id === req.params.id);
+router.get('/dashboard/events/:id/edit', requireRole('organizer'), asyncRoute(async (req, res) => {
+  const event = (await db.eventsForOrganizer(res.locals.currentUser.id)).find((e) => e.id === req.params.id);
   if (!event) {
     req.session.flash = 'That listing was not found.';
     req.session.flashType = 'error';
     return res.redirect('/dashboard');
   }
   res.render('edit-event', { title: 'Edit Listing', event, categories: db.CATEGORIES, usStates: db.US_STATES, errors: [] });
-});
+}));
 
-router.post('/dashboard/events/:id/edit', requireRole('organizer'), (req, res) => {
+router.post('/dashboard/events/:id/edit', requireRole('organizer'), asyncRoute(async (req, res) => {
   const { name, date, startTime, city, state, category, link } = req.body;
   const noLink = req.body.noLink === 'on';
   const errors = [];
@@ -89,7 +89,7 @@ router.post('/dashboard/events/:id/edit', requireRole('organizer'), (req, res) =
   if (!date) errors.push('Enter a date.');
   if (!city || !state) errors.push('Enter a city and state.');
 
-  const existing = db.eventsForOrganizer(res.locals.currentUser.id).find((e) => e.id === req.params.id);
+  const existing = (await db.eventsForOrganizer(res.locals.currentUser.id)).find((e) => e.id === req.params.id);
   if (!existing) {
     req.session.flash = 'That listing was not found.';
     req.session.flashType = 'error';
@@ -106,7 +106,7 @@ router.post('/dashboard/events/:id/edit', requireRole('organizer'), (req, res) =
     });
   }
 
-  db.updateEvent(req.params.id, res.locals.currentUser.id, {
+  await db.updateEvent(req.params.id, res.locals.currentUser.id, {
     name,
     date,
     startTime,
@@ -117,12 +117,12 @@ router.post('/dashboard/events/:id/edit', requireRole('organizer'), (req, res) =
   });
   req.session.flash = 'Listing updated.';
   res.redirect('/dashboard');
-});
+}));
 
-router.post('/dashboard/events/:id/cancel', requireRole('organizer'), (req, res) => {
-  db.cancelEvent(req.params.id, res.locals.currentUser.id);
+router.post('/dashboard/events/:id/cancel', requireRole('organizer'), asyncRoute(async (req, res) => {
+  await db.cancelEvent(req.params.id, res.locals.currentUser.id);
   req.session.flash = 'Listing cancelled.';
   res.redirect('/dashboard');
-});
+}));
 
 module.exports = router;
