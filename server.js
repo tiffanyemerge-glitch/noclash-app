@@ -47,6 +47,14 @@ app.use((req, res) => {
   res.status(404).render('404', { title: 'Not Found' });
 });
 
+// catches anything thrown or rejected by an async route (see lib/asyncRoute.js) so a database
+// hiccup shows an error page instead of hanging the request
+app.use((err, req, res, next) => {
+  console.error('[server] unhandled error:', (err && err.stack) || err);
+  if (res.headersSent) return next(err);
+  res.status(500).send('Something went wrong on our end. Please try again in a moment.');
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`NoClash running at http://localhost:${PORT}`);
