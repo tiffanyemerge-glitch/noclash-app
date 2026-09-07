@@ -2,7 +2,36 @@
 
 <p class="eyebrow">Viewer &middot; always free</p>
 <h2 class="section-title">My alerts</h2>
-<p class="section-sub">Tell us what you're into and where, and we'll let you know when it lands on the board.</p>
+<p class="section-sub">Tell us what you're into and where, and we'll let you know when it lands on the board. Set your city and state below and we'll also show live <strong>Public Search</strong> results for it right here.</p>
+
+<% if (publicSearch.active && !publicSearch.configured) { %>
+  <p class="flash">Public search isn't set up on this deployment yet.</p>
+<% } else if (publicSearch.active && publicSearch.error) { %>
+  <p class="flash error">Public search: <%= publicSearch.error %></p>
+<% } %>
+
+<% if (publicSearch.active && publicSearch.configured && !publicSearch.error) { %>
+  <div class="city-cluster" style="margin-bottom:28px;">
+    <span class="cluster-flag public">&#128269; Public Search &middot; <%= publicSearch.city %>, <%= publicSearch.state %></span>
+    <% if (publicResults.length === 0) { %>
+      <p class="board-empty">No public search results for <%= publicSearch.city %>, <%= publicSearch.state %> right now.</p>
+    <% } else { %>
+      <div class="card-row">
+        <% publicResults.forEach(e => { %>
+          <article class="flyer public-flyer">
+            <span class="pin gold"></span>
+            <span class="cat">Public Search &middot; Ticketmaster</span>
+            <h3><%= e.name %></h3>
+            <div class="meta"><% if (e.venue) { %><span><%= e.venue %></span><% } %><span><%= e.timeLabel || 'Time TBA' %></span></div>
+            <% if (e.url) { %><a class="link" href="<%= e.url %>" target="_blank" rel="noopener">View event &rarr;</a><% } else { %><span class="no-link">Details coming soon</span><% } %>
+          </article>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+<% } else { %>
+  <p class="section-sub">Add your city and state below to see live public search results here too.</p>
+<% } %>
 
 <form method="post" action="/account">
   <div class="form-card" style="max-width:560px;">
@@ -18,8 +47,15 @@
       </div>
     </div>
     <div class="field">
-      <label for="location">Near</label>
-      <input type="text" id="location" name="location" value="<%= user.location || '' %>" placeholder="e.g. Rivertown, OR &mdash; within 25 miles">
+      <label for="city">City</label>
+      <input type="text" id="city" name="city" value="<%= city %>" placeholder="e.g. Austin">
+    </div>
+    <div class="field">
+      <label for="state">State</label>
+      <select id="state" name="state">
+        <option value="">Choose a state</option>
+        <% usStates.forEach(s => { %><option value="<%= s.value %>" <%= state === s.value ? 'selected' : '' %>><%= s.label %> (<%= s.value %>)</option><% }) %>
+      </select>
     </div>
     <div class="field">
       <label>How often</label>
