@@ -207,10 +207,13 @@ section.block:first-of-type { margin-top: 30px; }
 .cal-day.busy { background: var(--pin-red-soft); border-color: var(--pin-red); color: var(--pin-red); font-weight: 700; }
 .cal-day.selected { outline: 2px solid var(--pin-gold); outline-offset: 1px; }
 .cal-day b { position: absolute; bottom: 1px; right: 3px; font-size: 0.58rem; }
+.cal-day.has-public { box-shadow: inset 0 0 0 1px var(--pin-gold); }
+.cal-day .pub-dot { position: absolute; top: 3px; left: 3px; width: 6px; height: 6px; border-radius: 50%; background: var(--pin-gold); }
 .cal-blank { visibility: hidden; }
 .cal-legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; font-size: 0.74rem; color: var(--ink-soft); }
 .cal-legend .sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: middle; border: 1px solid var(--line); }
 .sw.open { background: var(--surface); } .sw.one { background: var(--ok-green-soft); border-color: var(--ok-green); } .sw.busy { background: var(--pin-red-soft); border-color: var(--pin-red); }
+.sw.public { background: var(--pin-gold-soft); border-color: var(--pin-gold); }
 .board-surface .cal-month, .board-surface .cal-weekdays span, .board-surface .cal-legend { color: var(--paper-soft); opacity: 0.85; }
 .board-surface .cal-month a { border-color: rgba(255,255,255,0.3); color: var(--paper-soft); }
 
