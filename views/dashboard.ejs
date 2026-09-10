@@ -20,6 +20,30 @@
   <% } %>
 </div>
 
+<div class="side-card" style="margin-bottom:24px;">
+  <h3>My Profile</h3>
+  <p class="card-sub">Update your organization name, email, or password.</p>
+  <form method="post" action="/dashboard/profile">
+    <div class="field">
+      <label for="orgName">Organization / organizer name</label>
+      <input type="text" id="orgName" name="orgName" value="<%= currentUser.orgName %>">
+    </div>
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" value="<%= currentUser.email %>">
+    </div>
+    <div class="field">
+      <label for="newPassword">New password</label>
+      <input type="password" id="newPassword" name="newPassword" placeholder="Leave blank to keep your current password">
+    </div>
+    <div class="field">
+      <label for="confirmPassword">Confirm new password</label>
+      <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Leave blank to keep your current password">
+    </div>
+    <button class="btn-primary" type="submit">Save profile</button>
+  </form>
+</div>
+
 <p style="margin-bottom:16px;"><a class="btn-primary" href="/post">Post a new event</a></p>
 
 <div class="table-wrap">
