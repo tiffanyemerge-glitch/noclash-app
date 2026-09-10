@@ -1,4 +1,5 @@
 const express = require('express');
+const bcrypt = require('bcryptjs');
 const db = require('../lib/db');
 const { requireRole } = require('../lib/auth');
 const payments = require('../lib/payments');
@@ -23,6 +24,33 @@ router.get('/dashboard', requireRole('organizer'), asyncRoute(async (req, res) =
     passActiveUntil: user.passActiveUntil ? fmtDate(user.passActiveUntil) : null,
     stripeConfigured: payments.isConfigured()
   });
+}));
+
+router.post('/dashboard/profile', requireRole('organizer'), asyncRoute(async (req, res) => {
+  const { orgName, email, newPassword, confirmPassword } = req.body;
+  const errors = [];
+
+  if (!orgName || !orgName.trim()) errors.push('Enter an organization or organizer name.');
+  if (!email || !email.includes('@')) errors.push('Enter a valid email address.');
+  const clash = email ? await db.findUserByEmail(email) : null;
+  if (clash && clash.id !== res.locals.currentUser.id) errors.push('Another account already uses that email.');
+  if (newPassword || confirmPassword) {
+    if (!newPassword || newPassword.length < 8) errors.push('New password must be at least 8 characters.');
+    if (newPassword !== confirmPassword) errors.push('New passwords do not match.');
+  }
+
+  if (errors.length) {
+    req.session.flash = errors.join(' ');
+    req.session.flashType = 'error';
+    return res.redirect('/dashboard');
+  }
+
+  const patch = { orgName: orgName.trim(), email: email.trim() };
+  if (newPassword) patch.passwordHash = bcrypt.hashSync(newPassword, 10);
+  await db.updateUser(res.locals.currentUser.id, patch);
+
+  req.session.flash = 'Profile updated.';
+  res.redirect('/dashboard');
 }));
 
 router.post('/dashboard/pass/activate', requireRole('organizer'), asyncRoute(async (req, res) => {
