@@ -90,6 +90,20 @@ router.get('/dashboard/pass/confirm', requireRole('organizer'), asyncRoute(async
     }
     const oneYearOut = db.addDays(db.todayISO(), 365);
     await db.updateUser(res.locals.currentUser.id, { passActiveUntil: oneYearOut });
+
+    // Ambassador commission: 15% of the Pass sale, credited only if this user signed up with a
+    // referral code. recordCommission is keyed on the Stripe session id, so revisiting this page
+    // (e.g. a refresh) never credits the same sale twice.
+    if (res.locals.currentUser.referredByAmbassadorId) {
+      await db.recordCommission({
+        ambassadorId: res.locals.currentUser.referredByAmbassadorId,
+        userId: res.locals.currentUser.id,
+        stripeSessionId: sessionId,
+        amountCents: Math.round(checkoutSession.amount_total * 0.15),
+        source: 'pass'
+      });
+    }
+
     req.session.flash = `Organizer Pass activated — $${(checkoutSession.amount_total / 100).toFixed(2)} charged. Unlimited postings for the next year.`;
     res.redirect('/dashboard');
   } catch (err) {
