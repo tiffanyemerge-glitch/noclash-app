@@ -71,6 +71,11 @@
       </div>
     </div>
 
+    <div class="field">
+      <label for="referralCode">Referral code (optional)</label>
+      <input type="text" id="referralCode" name="referralCode" value="<%= values.referralCode || '' %>" placeholder="Have a code from a NoClash ambassador? Enter it here.">
+    </div>
+
     <button class="btn-primary block" type="submit">Create my account</button>
     <p class="hint">Already have an account? <a href="/login">Log in</a>.</p>
   </div>
