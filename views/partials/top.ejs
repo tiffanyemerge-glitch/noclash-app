@@ -25,6 +25,10 @@
       <a class="nav-link <%= currentPath === '/post' ? 'active' : '' %>" href="/post">Post an Event</a>
       <a class="nav-link <%= currentPath === '/pricing' ? 'active' : '' %>" href="/pricing">Pricing</a>
       <a class="nav-link <%= currentPath === '/contact' ? 'active' : '' %>" href="/contact">Contact</a>
+      <a class="nav-link <%= currentPath === '/ambassadors' ? 'active' : '' %>" href="/ambassadors">Ambassadors</a>
+      <% if (isAdmin) { %>
+        <a class="nav-link <%= currentPath === '/admin' ? 'active' : '' %>" href="/admin">Admin</a>
+      <% } %>
       <% if (currentUser && currentUser.role === 'organizer') { %>
         <a class="nav-link <%= currentPath === '/dashboard' ? 'active' : '' %>" href="/dashboard">Dashboard</a>
         <a class="nav-link" href="/logout">Log Out</a>
