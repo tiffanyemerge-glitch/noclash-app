@@ -31,6 +31,10 @@ app.use((req, res, next) => {
   res.locals.flashType = req.session.flashType || null;
   delete req.session.flash;
   delete req.session.flashType;
+  // whoever is logged in as ADMIN_EMAIL (an env var, not a stored role) sees the Admin nav link —
+  // see lib/auth.js requireAdmin, which is the actual gate on the /admin routes themselves
+  const adminEmail = (process.env.ADMIN_EMAIL || '').toLowerCase();
+  res.locals.isAdmin = !!(adminEmail && res.locals.currentUser && res.locals.currentUser.email.toLowerCase() === adminEmail);
   next();
 });
 
@@ -42,6 +46,8 @@ app.use('/', require('./routes/post'));
 app.use('/', require('./routes/dashboard'));
 app.use('/', require('./routes/account'));
 app.use('/', require('./routes/contact'));
+app.use('/', require('./routes/ambassadors'));
+app.use('/', require('./routes/admin'));
 
 app.use((req, res) => {
   res.status(404).render('404', { title: 'Not Found' });
