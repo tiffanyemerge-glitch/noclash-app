@@ -1,0 +1,65 @@
+<%- include('partials/top') %>
+
+<p class="eyebrow">Spread the word, earn along the way</p>
+<h2 class="section-title">Ambassador Program</h2>
+<p class="section-sub">Help other organizers discover NoClash, and earn a commission every time someone you refer signs up as a paying organizer.</p>
+
+<div class="form-card" style="max-width:640px; margin-bottom:28px;">
+  <h3 style="margin-top:0;">How it works</h3>
+  <ul style="margin:0 0 12px; padding-left:20px; line-height:1.7;">
+    <li>Apply below with your social links and audience size.</li>
+    <li>Once approved, you get a <strong>personal referral code</strong> to share.</li>
+    <li>Ambassadors post about NoClash <strong>at least twice a month</strong> to stay active in the program.</li>
+    <li>Anyone who signs up with your code and buys an <strong>Organizer Pass ($49)</strong> earns you <strong>15% ($7.35)</strong> per sign-up.</li>
+  </ul>
+  <p class="hint">Commissions are tracked on your application and paid out by NoClash directly &mdash; this isn't an automated payout, so you'll be paid separately from the site.</p>
+</div>
+
+<% if (errors && errors.length) { %>
+  <p class="flash error"><%= errors.join(' ') %></p>
+<% } %>
+
+<form method="post" action="/ambassadors/apply">
+  <div class="form-card" style="max-width:640px;">
+    <div class="field">
+      <label for="name">Name</label>
+      <input type="text" id="name" name="name" value="<%= values.name || '' %>" required>
+    </div>
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" value="<%= values.email || '' %>" required>
+    </div>
+    <div class="field">
+      <label for="followerCount">Total follower / audience count</label>
+      <input type="number" min="0" id="followerCount" name="followerCount" value="<%= values.followerCount || '' %>" required>
+    </div>
+    <div class="field">
+      <label for="instagram">Instagram (optional)</label>
+      <input type="text" id="instagram" name="instagram" value="<%= values.instagram || '' %>" placeholder="Profile link or @handle">
+    </div>
+    <div class="field">
+      <label for="tiktok">TikTok (optional)</label>
+      <input type="text" id="tiktok" name="tiktok" value="<%= values.tiktok || '' %>" placeholder="Profile link or @handle">
+    </div>
+    <div class="field">
+      <label for="youtube">YouTube (optional)</label>
+      <input type="text" id="youtube" name="youtube" value="<%= values.youtube || '' %>" placeholder="Channel link">
+    </div>
+    <div class="field">
+      <label for="twitter">X / Twitter (optional)</label>
+      <input type="text" id="twitter" name="twitter" value="<%= values.twitter || '' %>" placeholder="Profile link or @handle">
+    </div>
+    <div class="field">
+      <label for="otherLink">Other link (optional)</label>
+      <input type="text" id="otherLink" name="otherLink" value="<%= values.otherLink || '' %>" placeholder="Blog, newsletter, etc.">
+    </div>
+    <p class="hint" style="margin-top:-8px;">Add at least one link above.</p>
+    <div class="field">
+      <label for="note">Anything else we should know? (optional)</label>
+      <textarea id="note" name="note" rows="4"><%= values.note || '' %></textarea>
+    </div>
+    <button class="btn-primary block" type="submit">Submit application</button>
+  </div>
+</form>
+
+<%- include('partials/bottom') %>
