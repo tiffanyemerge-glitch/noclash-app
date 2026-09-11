@@ -6,12 +6,15 @@ const { asyncRoute } = require('../lib/asyncRoute');
 const router = express.Router();
 
 router.get('/signup', (req, res) => {
-  res.render('signup', { title: 'Create an Account', categories: db.CATEGORIES, values: {}, errors: [] });
+  // supports links like /signup?ref=CODE that ambassadors share, prefilling the referral field
+  const values = req.query.ref ? { referralCode: String(req.query.ref).toUpperCase() } : {};
+  res.render('signup', { title: 'Create an Account', categories: db.CATEGORIES, values, errors: [] });
 });
 
 router.post('/signup', asyncRoute(async (req, res) => {
   const { role, email, password, confirmPassword, orgName, location, frequency } = req.body;
   const interests = [].concat(req.body.interests || []);
+  const referralCode = (req.body.referralCode || '').trim().toUpperCase();
   const errors = [];
 
   if (role !== 'organizer' && role !== 'viewer') errors.push('Choose an account type: Organizer or Viewer.');
@@ -21,11 +24,14 @@ router.post('/signup', asyncRoute(async (req, res) => {
   if (email && (await db.findUserByEmail(email))) errors.push('An account with that email already exists.');
   if (role === 'organizer' && !orgName) errors.push('Enter an organization or organizer name.');
 
+  const ambassador = referralCode ? await db.findAmbassadorByCode(referralCode) : null;
+  if (referralCode && !ambassador) errors.push('That referral code was not recognized.');
+
   if (errors.length) {
     return res.status(400).render('signup', {
       title: 'Create an Account',
       categories: db.CATEGORIES,
-      values: req.body,
+      values: { ...req.body, referralCode },
       errors
     });
   }
@@ -37,7 +43,8 @@ router.post('/signup', asyncRoute(async (req, res) => {
     orgName: role === 'organizer' ? orgName : '',
     interests: role === 'viewer' ? interests : [],
     location: role === 'viewer' ? location || '' : '',
-    frequency: role === 'viewer' ? frequency || 'daily' : 'daily'
+    frequency: role === 'viewer' ? frequency || 'daily' : 'daily',
+    referredByAmbassadorId: ambassador ? ambassador.id : null
   });
 
   req.session.userId = user.id;
