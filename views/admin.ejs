@@ -1,0 +1,68 @@
+<%- include('partials/top') %>
+
+<p class="eyebrow">Admin</p>
+<h2 class="section-title">Ambassador Program</h2>
+<p class="section-sub">Review applications, manage referral codes, and track commissions owed.</p>
+
+<h3>Pending applications (<%= pending.length %>)</h3>
+<% if (pending.length === 0) { %>
+  <p class="board-empty">No pending applications.</p>
+<% } %>
+<% pending.forEach(a => { %>
+  <div class="side-card" style="margin-bottom:16px;">
+    <p><strong><%= a.name %></strong> &mdash; <%= a.email %></p>
+    <p class="card-sub"><%= a.followerCount.toLocaleString() %> followers</p>
+    <p class="hint">
+      <% if (a.instagram) { %>Instagram: <%= a.instagram %><br><% } %>
+      <% if (a.tiktok) { %>TikTok: <%= a.tiktok %><br><% } %>
+      <% if (a.youtube) { %>YouTube: <%= a.youtube %><br><% } %>
+      <% if (a.twitter) { %>X/Twitter: <%= a.twitter %><br><% } %>
+      <% if (a.otherLink) { %>Other: <%= a.otherLink %><br><% } %>
+    </p>
+    <% if (a.note) { %><p class="hint">Note: <%= a.note %></p><% } %>
+    <form method="post" action="/admin/ambassadors/<%= a.id %>/approve" style="display:inline-block; margin-right:8px;">
+      <button class="btn-primary" type="submit">Approve</button>
+    </form>
+    <form method="post" action="/admin/ambassadors/<%= a.id %>/reject" style="display:inline-block;" onsubmit="return confirm('Reject this application?');">
+      <button type="submit" style="background:none;border:1px solid var(--pin-red);padding:9px 17px;border-radius:8px;cursor:pointer;color:var(--pin-red);font-family:inherit;font-size:0.9rem;">Reject</button>
+    </form>
+  </div>
+<% }) %>
+
+<h3>Approved ambassadors (<%= approved.length %>)</h3>
+<% if (approved.length === 0) { %>
+  <p class="board-empty">No approved ambassadors yet.</p>
+<% } else { %>
+<div class="table-wrap">
+  <table class="dashboard-table">
+    <thead>
+      <tr><th>Name</th><th>Code</th><th>Referrals</th><th>Owed</th><th>Paid</th><th>Mark paid</th></tr>
+    </thead>
+    <tbody>
+      <% approved.forEach(a => { %>
+        <tr>
+          <td><%= a.name %><br><span class="hint"><%= a.email %></span></td>
+          <td><code><%= a.code %></code></td>
+          <td><%= a.referralCount %></td>
+          <td>$<%= (a.owedCents / 100).toFixed(2) %></td>
+          <td>$<%= (a.paidCents / 100).toFixed(2) %></td>
+          <td>
+            <% a.commissions.forEach(c => { %>
+              <form method="post" action="/admin/commissions/<%= c.id %>/mark-paid" style="margin-bottom:4px;">
+                <button type="submit" class="edit-link" style="background:none;border:none;padding:0;cursor:pointer;">Mark $<%= (c.amountCents / 100).toFixed(2) %> paid</button>
+              </form>
+            <% }) %>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<% } %>
+
+<% if (rejected.length > 0) { %>
+  <h3>Rejected (<%= rejected.length %>)</h3>
+  <p class="hint"><%= rejected.map(a => `${a.name} (${a.email})`).join(', ') %></p>
+<% } %>
+
+<%- include('partials/bottom') %>
