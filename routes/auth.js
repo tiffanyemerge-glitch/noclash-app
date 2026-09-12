@@ -36,6 +36,13 @@ router.post('/signup', asyncRoute(async (req, res) => {
     });
   }
 
+  // Ambassadors get a free Organizer Pass. This checks the signup's OWN email against the
+  // ambassador list (separate from `ambassador` above, which is whoever's referral code they
+  // used, if any) — so an approved ambassador signing up as an organizer gets the pass activated
+  // immediately instead of being asked to pay. See db.approveAmbassador for the other half of
+  // this: granting the pass right away if they already had an organizer account when approved.
+  const ownAmbassadorRecord = role === 'organizer' ? await db.findApprovedAmbassadorByEmail(email) : null;
+
   const user = await db.createUser({
     email,
     passwordHash: bcrypt.hashSync(password, 10),
@@ -44,13 +51,16 @@ router.post('/signup', asyncRoute(async (req, res) => {
     interests: role === 'viewer' ? interests : [],
     location: role === 'viewer' ? location || '' : '',
     frequency: role === 'viewer' ? frequency || 'daily' : 'daily',
-    referredByAmbassadorId: ambassador ? ambassador.id : null
+    referredByAmbassadorId: ambassador ? ambassador.id : null,
+    passActiveUntil: ownAmbassadorRecord ? db.addDays(db.todayISO(), 365) : null
   });
 
   req.session.userId = user.id;
   req.session.flash =
     role === 'organizer'
-      ? 'Account created. You can post your first event whenever you\'re ready.'
+      ? ownAmbassadorRecord
+        ? 'Account created — your free ambassador Organizer Pass is active. Post your first event whenever you\'re ready.'
+        : 'Account created. You can post your first event whenever you\'re ready.'
       : 'Account created. We\'ll alert you when something matches your interests.';
   res.redirect(role === 'organizer' ? '/dashboard' : '/account');
 }));
