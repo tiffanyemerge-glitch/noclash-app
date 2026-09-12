@@ -36,7 +36,7 @@
 <div class="table-wrap">
   <table class="dashboard-table">
     <thead>
-      <tr><th>Name</th><th>Code</th><th>Date Approved</th><th>Referrals</th><th>Owed</th><th>Paid</th><th>Mark paid</th></tr>
+      <tr><th>Name</th><th>Code</th><th>Date Approved</th><th>Referrals</th><th>Owed</th><th>Paid</th><th>Mark paid</th><th>Email</th></tr>
     </thead>
     <tbody>
       <% approved.forEach(a => { %>
@@ -53,6 +53,11 @@
                 <button type="submit" class="edit-link" style="background:none;border:none;padding:0;cursor:pointer;">Mark $<%= (c.amountCents / 100).toFixed(2) %> paid</button>
               </form>
             <% }) %>
+          </td>
+          <td>
+            <form method="post" action="/admin/ambassadors/<%= a.id %>/resend-email">
+              <button type="submit" class="edit-link" style="background:none;border:none;padding:0;cursor:pointer;">Resend email</button>
+            </form>
           </td>
         </tr>
       <% }) %>
