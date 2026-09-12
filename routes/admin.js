@@ -41,6 +41,28 @@ router.post('/admin/ambassadors/:id/approve', requireAdmin, asyncRoute(async (re
   res.redirect('/admin');
 }));
 
+// Resends the approval email (code + free-pass note) to an already-approved ambassador,
+// without touching their status, code, or reviewed_at — for cases like a first send that failed
+// (e.g. before the sending domain was verified) that the admin only discovers after the fact.
+router.post('/admin/ambassadors/:id/resend-email', requireAdmin, asyncRoute(async (req, res) => {
+  const ambassador = await db.findAmbassadorById(req.params.id);
+  if (!ambassador || ambassador.status !== 'approved') {
+    req.session.flash = 'That ambassador was not found.';
+    req.session.flashType = 'error';
+    return res.redirect('/admin');
+  }
+
+  try {
+    await mailer.sendAmbassadorApproved({ to: ambassador.email, name: ambassador.name, code: ambassador.code });
+    req.session.flash = `Resent the approval email to ${ambassador.email}.`;
+  } catch (err) {
+    console.error('[admin] ambassador resend email failed:', (err && err.stack) || err);
+    req.session.flash = `Could not send the email to ${ambassador.email} — check the server logs.`;
+    req.session.flashType = 'error';
+  }
+  res.redirect('/admin');
+}));
+
 router.post('/admin/ambassadors/:id/reject', requireAdmin, asyncRoute(async (req, res) => {
   await db.rejectAmbassador(req.params.id);
   req.session.flash = 'Application rejected.';
