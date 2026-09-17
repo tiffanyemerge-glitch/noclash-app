@@ -6,7 +6,11 @@ const { asyncRoute } = require('../lib/asyncRoute');
 const router = express.Router();
 
 router.get('/admin', requireAdmin, asyncRoute(async (req, res) => {
-  const [ambassadors, commissions] = await Promise.all([db.listAmbassadors(), db.listCommissions()]);
+  const [ambassadors, commissions, compedPasses] = await Promise.all([
+    db.listAmbassadors(),
+    db.listCommissions(),
+    db.listCompedPasses()
+  ]);
 
   const withStats = ambassadors.map((a) => {
     const own = commissions.filter((c) => c.ambassadorId === a.id);
@@ -19,8 +23,27 @@ router.get('/admin', requireAdmin, asyncRoute(async (req, res) => {
     title: 'Admin',
     pending: withStats.filter((a) => a.status === 'pending'),
     approved: withStats.filter((a) => a.status === 'approved'),
-    rejected: withStats.filter((a) => a.status === 'rejected')
+    rejected: withStats.filter((a) => a.status === 'rejected'),
+    compedPasses
   });
+}));
+
+// Comps a specific email a permanent Organizer Pass — a manual one-off (partner, vendor, etc.),
+// distinct from the ambassador program. Activates immediately if the email already has an
+// organizer account; otherwise it's remembered and applied at signup (see routes/auth.js).
+router.post('/admin/organizer-pass/grant', requireAdmin, asyncRoute(async (req, res) => {
+  const email = (req.body.email || '').trim();
+  if (!email || !email.includes('@')) {
+    req.session.flash = 'Enter a valid email address.';
+    req.session.flashType = 'error';
+    return res.redirect('/admin');
+  }
+
+  const { accountFound } = await db.grantForeverOrganizerPass(email);
+  req.session.flash = accountFound
+    ? `Granted ${email} a lifetime Organizer Pass — active now.`
+    : `Saved a lifetime Organizer Pass for ${email} — it'll activate automatically the moment they sign up as an organizer.`;
+  res.redirect('/admin');
 }));
 
 router.post('/admin/ambassadors/:id/approve', requireAdmin, asyncRoute(async (req, res) => {
