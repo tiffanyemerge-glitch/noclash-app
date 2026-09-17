@@ -71,4 +71,33 @@
   <p class="hint"><%= rejected.map(a => `${a.name} (${a.email})`).join(', ') %></p>
 <% } %>
 
+<h3>Organizer Pass grants</h3>
+<p class="section-sub">Comp a specific email a permanent Organizer Pass — separate from the ambassador program (a partner, a vendor, etc). Works whether or not they have an account yet.</p>
+<form method="post" action="/admin/organizer-pass/grant" class="side-card" style="margin-bottom:16px; display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap;">
+  <div class="field" style="flex:1; min-width:220px; margin:0;">
+    <label for="organizer-pass-email">Email</label>
+    <input type="email" id="organizer-pass-email" name="email" required placeholder="name@example.com">
+  </div>
+  <button class="btn-primary" type="submit">Grant lifetime pass</button>
+</form>
+
+<% if (compedPasses.length > 0) { %>
+<div class="table-wrap">
+  <table class="dashboard-table">
+    <thead>
+      <tr><th>Email</th><th>Granted</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <% compedPasses.forEach(c => { %>
+        <tr>
+          <td><%= c.email %></td>
+          <td><%= new Date(c.grantedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %></td>
+          <td><%= c.active ? 'Active' : 'Waiting for signup' %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<% } %>
+
 <%- include('partials/bottom') %>
