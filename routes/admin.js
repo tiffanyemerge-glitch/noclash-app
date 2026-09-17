@@ -46,6 +46,27 @@ router.post('/admin/organizer-pass/grant', requireAdmin, asyncRoute(async (req, 
   res.redirect('/admin');
 }));
 
+// Emails a comped email inviting them to sign up and activate their lifetime Organizer Pass —
+// for grants that are still "Waiting for signup" and haven't been told about it yet.
+router.post('/admin/organizer-pass/invite', requireAdmin, asyncRoute(async (req, res) => {
+  const email = (req.body.email || '').trim();
+  if (!email || !email.includes('@')) {
+    req.session.flash = 'Enter a valid email address.';
+    req.session.flashType = 'error';
+    return res.redirect('/admin');
+  }
+
+  try {
+    await mailer.sendOrganizerPassInvite({ to: email });
+    req.session.flash = `Sent a signup invite to ${email}.`;
+  } catch (err) {
+    console.error('[admin] organizer pass invite email failed:', (err && err.stack) || err);
+    req.session.flash = `Could not send the invite to ${email} — check the server logs.`;
+    req.session.flashType = 'error';
+  }
+  res.redirect('/admin');
+}));
+
 router.post('/admin/ambassadors/:id/approve', requireAdmin, asyncRoute(async (req, res) => {
   const ambassador = await db.approveAmbassador(req.params.id);
   if (!ambassador) {
