@@ -43,6 +43,10 @@ router.post('/signup', asyncRoute(async (req, res) => {
   // this: granting the pass right away if they already had an organizer account when approved.
   const ownAmbassadorRecord = role === 'organizer' ? await db.findApprovedAmbassadorByEmail(email) : null;
 
+  // Separately, an admin can comp a specific email a permanent Organizer Pass (routes/admin.js) —
+  // that applies here too, the moment a comped email signs up as an organizer.
+  const hasCompedPass = role === 'organizer' && !ownAmbassadorRecord ? await db.findCompedPassByEmail(email) : false;
+
   const user = await db.createUser({
     email,
     passwordHash: bcrypt.hashSync(password, 10),
@@ -52,7 +56,11 @@ router.post('/signup', asyncRoute(async (req, res) => {
     location: role === 'viewer' ? location || '' : '',
     frequency: role === 'viewer' ? frequency || 'daily' : 'daily',
     referredByAmbassadorId: ambassador ? ambassador.id : null,
-    passActiveUntil: ownAmbassadorRecord ? db.addDays(db.todayISO(), 365) : null
+    passActiveUntil: ownAmbassadorRecord
+      ? db.addDays(db.todayISO(), 365)
+      : hasCompedPass
+        ? db.FOREVER_PASS_UNTIL
+        : null
   });
 
   req.session.userId = user.id;
@@ -60,7 +68,9 @@ router.post('/signup', asyncRoute(async (req, res) => {
     role === 'organizer'
       ? ownAmbassadorRecord
         ? 'Account created — your free ambassador Organizer Pass is active. Post your first event whenever you\'re ready.'
-        : 'Account created. You can post your first event whenever you\'re ready.'
+        : hasCompedPass
+          ? 'Account created — your Organizer Pass is active. Post your first event whenever you\'re ready.'
+          : 'Account created. You can post your first event whenever you\'re ready.'
       : 'Account created. We\'ll alert you when something matches your interests.';
   res.redirect(role === 'organizer' ? '/dashboard' : '/account');
 }));
