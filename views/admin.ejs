@@ -85,7 +85,7 @@
 <div class="table-wrap">
   <table class="dashboard-table">
     <thead>
-      <tr><th>Email</th><th>Granted</th><th>Status</th></tr>
+      <tr><th>Email</th><th>Granted</th><th>Status</th><th>Invite</th></tr>
     </thead>
     <tbody>
       <% compedPasses.forEach(c => { %>
@@ -93,6 +93,14 @@
           <td><%= c.email %></td>
           <td><%= new Date(c.grantedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %></td>
           <td><%= c.active ? 'Active' : 'Waiting for signup' %></td>
+          <td>
+            <% if (!c.active) { %>
+              <form method="post" action="/admin/organizer-pass/invite">
+                <input type="hidden" name="email" value="<%= c.email %>">
+                <button type="submit" class="edit-link" style="background:none;border:none;padding:0;cursor:pointer;">Send invite</button>
+              </form>
+            <% } %>
+          </td>
         </tr>
       <% }) %>
     </tbody>
