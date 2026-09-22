@@ -14,7 +14,7 @@ function qs(overrides) {
 
 <p class="eyebrow">Public &middot; free to browse</p>
 <h2 class="section-title">What's happening, and where it overlaps</h2>
-<p class="section-sub">Every listing is pinned by day and city. A red pin means more than one event is already booked that day in that town — a green pin means the coast is clear. Pick one city and state below to also pull in real, already-scheduled events there from Ticketmaster, tagged <strong>Public Search</strong>.</p>
+<p class="section-sub">Every listing is pinned by day and city. A red pin means more than one event is already booked that day in that town — a green pin means the coast is clear. Pick one city and state below to also pull in real, already-scheduled events there from Ticketmaster — and for Hampton Roads, VA cities, straight from that city's own public events calendar — tagged <strong>Public Search</strong>.</p>
 
 <form class="filters" method="get" action="/board">
   <input type="hidden" name="view" value="<%= view %>">
@@ -84,7 +84,7 @@ function qs(overrides) {
               <% g.publicEvents.forEach(e => { %>
                 <article class="flyer public-flyer">
                   <span class="pin gold"></span>
-                  <span class="cat">Public Search &middot; Ticketmaster</span>
+                  <span class="cat">Public Search &middot; <%= e.source %></span>
                   <h3><%= e.name %></h3>
                   <div class="meta"><% if (e.venue) { %><span><%= e.venue %></span><% } %><span><%= e.timeLabel %></span></div>
                   <% if (e.url) { %><a class="link" href="<%= e.url %>" target="_blank" rel="noopener">View event &rarr;</a><% } else { %><span class="no-link">Details coming soon</span><% } %>
