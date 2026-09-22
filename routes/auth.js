@@ -8,7 +8,13 @@ const router = express.Router();
 router.get('/signup', (req, res) => {
   // supports links like /signup?ref=CODE that ambassadors share, prefilling the referral field
   const values = req.query.ref ? { referralCode: String(req.query.ref).toUpperCase() } : {};
-  res.render('signup', { title: 'Create an Account', categories: db.CATEGORIES, values, errors: [] });
+  res.render('signup', {
+    title: 'Create an Account',
+    categories: db.CATEGORIES,
+    values,
+    errors: [],
+    metaDescription: 'Create a free NoClash account — post events as an Organizer, or sign up as a Viewer to get alerts for what\'s happening near you.'
+  });
 });
 
 router.post('/signup', asyncRoute(async (req, res) => {
@@ -76,7 +82,12 @@ router.post('/signup', asyncRoute(async (req, res) => {
 }));
 
 router.get('/login', (req, res) => {
-  res.render('login', { title: 'Log In', values: {}, errors: [] });
+  res.render('login', {
+    title: 'Log In',
+    values: {},
+    errors: [],
+    metaDescription: 'Log in to your NoClash account to manage your event listings or your alert preferences.'
+  });
 });
 
 router.post('/login', asyncRoute(async (req, res) => {
