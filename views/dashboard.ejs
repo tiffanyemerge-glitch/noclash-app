@@ -49,11 +49,11 @@
 <div class="table-wrap">
   <table class="dashboard-table">
     <thead>
-      <tr><th>Event</th><th>Date</th><th>City</th><th>Category</th><th>Plan</th><th>Link</th><th>Status</th><th></th></tr>
+      <tr><th>Event</th><th>Date</th><th>City</th><th>Category</th><th>Plan</th><th>Link</th><th>Status</th><th>Promote</th><th></th></tr>
     </thead>
     <tbody>
       <% if (events.length === 0) { %>
-        <tr><td colspan="8">You haven't posted anything yet.</td></tr>
+        <tr><td colspan="9">You haven't posted anything yet.</td></tr>
       <% } %>
       <% events.forEach(e => { %>
         <tr>
@@ -64,6 +64,12 @@
           <td><%= e.planLabel %></td>
           <td><%= e.link ? 'Added' : 'Not added yet' %></td>
           <td><span class="status-pill <%= e.status %>"><%= e.status %></span></td>
+          <td>
+            <div class="promo-url-row promo-url-row-compact">
+              <input type="text" class="promo-url-input" readonly onclick="this.select();" value="<%= siteUrl %>/events/<%= e.slug %>">
+              <button type="button" class="edit-link copy-promo-url" style="background:none;border:none;padding:0;cursor:pointer;">Copy</button>
+            </div>
+          </td>
           <td>
             <a class="edit-link" href="/dashboard/events/<%= e.id %>/edit">Edit</a>
             <% if (e.status === 'published') { %>
@@ -78,5 +84,29 @@
     </tbody>
   </table>
 </div>
+
+<script>
+  document.querySelectorAll('.copy-promo-url').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var input = btn.previousElementSibling;
+      var done = function () {
+        var original = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(function () { btn.textContent = original; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(input.value).then(done).catch(function () {
+          input.select();
+          document.execCommand('copy');
+          done();
+        });
+      } else {
+        input.select();
+        document.execCommand('copy');
+        done();
+      }
+    });
+  });
+</script>
 
 <%- include('partials/bottom') %>
