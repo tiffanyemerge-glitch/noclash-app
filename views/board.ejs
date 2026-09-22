@@ -68,9 +68,10 @@ function qs(overrides) {
                 <article class="flyer">
                   <span class="pin <%= c.clash ? 'red' : 'green' %>"></span>
                   <span class="cat"><%= e.categoryLabel %></span>
-                  <h3><%= e.name %></h3>
+                  <h3><a class="flyer-title-link" href="/events/<%= e.slug %>"><%= e.name %></a></h3>
                   <div class="meta"><span><%= e.city %>, <%= e.state %></span><span><%= e.timeLabel %></span></div>
-                  <% if (e.link) { %><a class="link" href="<%= e.link %>" target="_blank" rel="noopener">View event &rarr;</a><% } else { %><span class="no-link">Details coming soon</span><% } %>
+                  <a class="link" href="/events/<%= e.slug %>">Event details &rarr;</a>
+                  <% if (e.link) { %><a class="link" href="<%= e.link %>" target="_blank" rel="noopener">Tickets / more info &#8599;</a><% } %>
                 </article>
               <% }) %>
             </div>
