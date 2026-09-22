@@ -5,7 +5,12 @@ const { asyncRoute } = require('../lib/asyncRoute');
 const router = express.Router();
 
 router.get('/ambassadors', (req, res) => {
-  res.render('ambassadors', { title: 'Ambassador Program', values: {}, errors: [] });
+  res.render('ambassadors', {
+    title: 'Ambassador Program',
+    values: {},
+    errors: [],
+    metaDescription: 'Join the NoClash Ambassador Program: earn a 15% commission for every Organizer Pass you refer, plus a free pass of your own.'
+  });
 });
 
 router.post('/ambassadors/apply', asyncRoute(async (req, res) => {
