@@ -1,0 +1,78 @@
+<%- include('partials/top') %>
+
+<p class="eyebrow"><%= event.categoryLabel %><% if (event.status !== 'published') { %> &middot; <span class="status-pill <%= event.status %>"><%= event.status %></span><% } %></p>
+<h1 class="section-title event-title"><%= event.name %></h1>
+<p class="event-meta-line"><%= event.dateLabel %> &middot; <%= event.timeLabel %> &middot; <%= event.locationLabel %></p>
+
+<div class="post-grid">
+  <div>
+    <% if (event.status !== 'published') { %>
+      <p class="flash">This listing is <%= event.status %> and no longer an active, upcoming event.</p>
+    <% } %>
+
+    <% if (event.description) { %>
+      <p class="event-description"><%= event.description %></p>
+    <% } %>
+
+    <% if (event.link) { %>
+      <p style="margin: 18px 0;"><a class="btn-primary" href="<%= event.link %>" target="_blank" rel="noopener">Get tickets / more info &rarr;</a></p>
+    <% } else { %>
+      <p class="hint">No ticket or info link added yet &mdash; check back, or reach out to the organizer directly.</p>
+    <% } %>
+
+    <% if (event.organizerName) { %>
+      <p class="card-sub" style="margin-top:18px;">Hosted by <strong><%= event.organizerName %></strong></p>
+    <% } %>
+
+    <p class="hint" style="margin-top:22px;"><a href="/board">&larr; back to the board</a></p>
+  </div>
+
+  <div class="side-card">
+    <h3>Promote this event</h3>
+    <p class="card-sub">This is your event's permanent link &mdash; share it anywhere.</p>
+    <div class="promo-url-row">
+      <input type="text" class="promo-url-input" id="event-url" value="<%= canonicalUrl %>" readonly onclick="this.select();">
+      <button type="button" class="btn-primary" id="copy-event-url">Copy link</button>
+    </div>
+    <div class="social-icons share-row">
+      <a href="https://twitter.com/intent/tweet?text=<%= encodeURIComponent(event.name + ' — ' + event.locationLabel) %>&url=<%= encodeURIComponent(canonicalUrl) %>" target="_blank" rel="noopener" title="Share on X / Twitter">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.9 2H22l-7.6 8.7L23 22h-7l-5.5-6.6L4.3 22H1l8.2-9.4L1 2h7.2l5 6L18.9 2Zm-1.2 18h1.7L7.4 4H5.6l12.1 16Z"/></svg>
+      </a>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=<%= encodeURIComponent(canonicalUrl) %>" target="_blank" rel="noopener" title="Share on Facebook">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.4h-1.3c-1.2 0-1.6.8-1.6 1.6V12h2.8l-.4 2.9h-2.4v7A10 10 0 0 0 22 12Z"/></svg>
+      </a>
+      <a href="mailto:?subject=<%= encodeURIComponent(event.name) %>&body=<%= encodeURIComponent(event.name + ' — ' + event.dateLabel + ', ' + event.timeLabel + ' in ' + event.locationLabel + '. ' + canonicalUrl) %>" title="Share by email">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 5h20v14H2V5Zm2 2v.5l8 5.5 8-5.5V7l-8 5.4L4 7Z"/></svg>
+      </a>
+    </div>
+    <p class="hint">Posting your own flyer, an Instagram story, or a group text? This link always points straight to this event's page.</p>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var btn = document.getElementById('copy-event-url');
+    var input = document.getElementById('event-url');
+    if (!btn || !input) return;
+    btn.addEventListener('click', function () {
+      var done = function () {
+        var original = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(function () { btn.textContent = original; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(input.value).then(done).catch(function () {
+          input.select();
+          document.execCommand('copy');
+          done();
+        });
+      } else {
+        input.select();
+        document.execCommand('copy');
+        done();
+      }
+    });
+  })();
+</script>
+
+<%- include('partials/bottom') %>
