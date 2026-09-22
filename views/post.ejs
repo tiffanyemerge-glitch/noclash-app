@@ -126,6 +126,10 @@ function qs(overrides) {
           </select>
         </div>
         <div class="field">
+          <label for="description">Description <span style="text-transform:none; font-weight:400;">(optional)</span></label>
+          <textarea id="description" name="description" rows="3" maxlength="600" placeholder="A couple sentences about the event — what it is, who it's for. Shows on your event's page and helps it turn up in search."><%= values.description || '' %></textarea>
+        </div>
+        <div class="field">
           <label for="link">Event link</label>
           <input type="text" id="link" name="link" placeholder="https://" disabled>
         </div>
