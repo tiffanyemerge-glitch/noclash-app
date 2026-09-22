@@ -7,6 +7,10 @@ const { attachUser } = require('./lib/auth');
 
 const app = express();
 
+// Render sits behind its own proxy — without this, req.protocol always reports "http" (so
+// canonical/OG URLs would be built wrong) even though the site is only ever served over https.
+app.set('trust proxy', 1);
+
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
@@ -27,6 +31,11 @@ app.use(
 app.use(attachUser);
 app.use((req, res, next) => {
   res.locals.currentPath = req.path;
+  // Base URL + canonical link for every page (routes/event.js overrides canonicalUrl for the
+  // one case — filtered /board or /post query strings — where the canonical page is the bare
+  // path, not the exact URL requested; everywhere else this default is already correct).
+  res.locals.siteUrl = process.env.SITE_URL || `${req.protocol}://${req.get('host')}`;
+  res.locals.canonicalUrl = `${res.locals.siteUrl}${req.path}`;
   res.locals.flash = req.session.flash || null;
   res.locals.flashType = req.session.flashType || null;
   delete req.session.flash;
@@ -48,6 +57,8 @@ app.use('/', require('./routes/account'));
 app.use('/', require('./routes/contact'));
 app.use('/', require('./routes/ambassadors'));
 app.use('/', require('./routes/admin'));
+app.use('/', require('./routes/event'));
+app.use('/', require('./routes/seo'));
 
 app.use((req, res) => {
   res.status(404).render('404', { title: 'Not Found' });
