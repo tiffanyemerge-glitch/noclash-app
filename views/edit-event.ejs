@@ -40,6 +40,10 @@
       </select>
     </div>
     <div class="field">
+      <label for="description">Description <span style="text-transform:none; font-weight:400;">(optional)</span></label>
+      <textarea id="description" name="description" rows="3" maxlength="600" placeholder="A couple sentences about the event — shows on your event's page and helps it turn up in search."><%= event.description || '' %></textarea>
+    </div>
+    <div class="field">
       <label for="link">Event link</label>
       <input type="text" id="link" name="link" value="<%= event.link || '' %>" placeholder="https://" <%= event.link ? '' : 'disabled' %>>
     </div>
