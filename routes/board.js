@@ -3,6 +3,7 @@ const db = require('../lib/db');
 const { monthCounts, groupByDateThenCity } = require('../lib/availability');
 const { asyncRoute } = require('../lib/asyncRoute');
 const { checkTicketmasterCity } = require('../lib/externalEvents');
+const { checkHamptonRoadsCity, isHamptonRoadsCity } = require('../lib/hamptonRoadsEvents');
 const router = express.Router();
 
 function fmtDate(iso) {
@@ -66,10 +67,14 @@ router.get('/board', asyncRoute(async (req, res) => {
     : [today.getFullYear(), today.getMonth()];
 
   // Public Search: once someone has picked one specific city + state, look up what's
-  // already scheduled on Ticketmaster there and show it alongside NoClash's own listings,
-  // tagged "Public Search." This is a live lookup on every request — nothing is imported
-  // or stored, so there's no background job and no new table to keep in sync.
-  const publicSearch = { active: false, configured: true, error: null, city: null, state: null };
+  // already scheduled elsewhere there and show it alongside NoClash's own listings, tagged
+  // "Public Search." This is a live lookup on every request — nothing is imported or
+  // stored, so there's no background job and no new table to keep in sync. Ticketmaster
+  // covers ticketed events everywhere; for the handful of Hampton Roads, VA cities whose
+  // own public calendars NoClash also knows how to read (see lib/hamptonRoadsEvents.js),
+  // that city's own listings — festivals, markets, council meetings, road closures, whatever
+  // the city itself publishes — are pulled in too, each tagged with its own source.
+  const publicSearch = { active: false, configured: true, error: null, city: null, state: null, hamptonRoads: isHamptonRoadsCity(filters.city, filters.state) };
   const publicByDate = {};
   if (filters.city !== 'all' && filters.state !== 'all') {
     publicSearch.active = true;
@@ -81,7 +86,10 @@ router.get('/board', asyncRoute(async (req, res) => {
     // because there was nothing on, but because the batch never reached that month. The
     // calendar view knows exactly which month it's showing, so scope the Ticketmaster
     // query to that month's own date range instead: every month gets its own accurate
-    // lookup, however far out someone navigates.
+    // lookup, however far out someone navigates. (The Hampton Roads city calendars don't
+    // support a date-range query — they're read in full and naturally only cover what
+    // each city itself has published a few weeks out, so those results thin out for months
+    // further ahead; that's a limit of the source, not of this lookup.)
     const tmOptions = { city: filters.city, state: filters.state };
     if (view === 'calendar') {
       const monthStart = new Date(year, month, 1);
@@ -90,14 +98,20 @@ router.get('/board', asyncRoute(async (req, res) => {
       tmOptions.endDate = monthEnd;
       tmOptions.size = 200; // Ticketmaster Discovery API's max page size — one city/month won't exceed it
     }
-    const result = await checkTicketmasterCity(tmOptions);
-    publicSearch.configured = result.configured;
-    publicSearch.error = result.error;
+    const [tmResult, hrResult] = await Promise.all([
+      checkTicketmasterCity(tmOptions),
+      publicSearch.hamptonRoads ? checkHamptonRoadsCity({ city: filters.city, state: filters.state }) : Promise.resolve({ provider: null, configured: true, events: [], error: null })
+    ]);
+    publicSearch.configured = tmResult.configured;
+    const errors = [];
+    if (tmResult.error) errors.push(`Ticketmaster ${tmResult.error}`);
+    if (hrResult.error) errors.push(hrResult.error);
+    publicSearch.error = errors.length ? errors.join(' ') : null;
 
-    let publicEvents = result.events;
+    let publicEvents = [...tmResult.events.map((e) => ({ ...e, source: 'Ticketmaster' })), ...hrResult.events];
     if (filters.date !== 'all') publicEvents = publicEvents.filter((e) => e.date === filters.date);
-    // Ticketmaster results aren't sorted into NoClash's own categories, so a category
-    // filter (which only makes sense for organizer listings) hides them rather than guess.
+    // These results aren't sorted into NoClash's own categories, so a category filter
+    // (which only makes sense for organizer listings) hides them rather than guess.
     if (filters.category !== 'all') publicEvents = [];
 
     publicEvents.forEach((e) => {
