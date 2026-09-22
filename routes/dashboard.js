@@ -124,7 +124,7 @@ router.get('/dashboard/events/:id/edit', requireRole('organizer'), asyncRoute(as
 }));
 
 router.post('/dashboard/events/:id/edit', requireRole('organizer'), asyncRoute(async (req, res) => {
-  const { name, date, startTime, city, state, category, link } = req.body;
+  const { name, date, startTime, city, state, category, link, description } = req.body;
   const noLink = req.body.noLink === 'on';
   const errors = [];
   if (!name) errors.push('Enter an event name.');
@@ -141,7 +141,7 @@ router.post('/dashboard/events/:id/edit', requireRole('organizer'), asyncRoute(a
   if (errors.length) {
     return res.status(400).render('edit-event', {
       title: 'Edit Listing',
-      event: { ...existing, name, date, startTime, city, state, category, link },
+      event: { ...existing, name, date, startTime, city, state, category, link, description },
       categories: db.CATEGORIES,
       usStates: db.US_STATES,
       errors
@@ -155,7 +155,8 @@ router.post('/dashboard/events/:id/edit', requireRole('organizer'), asyncRoute(a
     city: city.trim(),
     state: state.trim().toUpperCase(),
     category,
-    link: noLink ? '' : link || ''
+    link: noLink ? '' : link || '',
+    description: (description || '').trim().slice(0, 600)
   });
   req.session.flash = 'Listing updated.';
   res.redirect('/dashboard');
