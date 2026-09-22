@@ -83,7 +83,7 @@ router.get('/post', requireRole('organizer'), asyncRoute(async (req, res) => {
 }));
 
 router.post('/post', requireRole('organizer'), asyncRoute(async (req, res) => {
-  const { name, date, city, state, startTime, category, link, plan } = req.body;
+  const { name, date, city, state, startTime, category, link, plan, description } = req.body;
   const noLink = req.body.noLink === 'on';
   const errors = [];
 
@@ -113,6 +113,7 @@ router.post('/post', requireRole('organizer'), asyncRoute(async (req, res) => {
     state: state.trim().toUpperCase(),
     category,
     link: noLink ? '' : (link || ''),
+    description: (description || '').trim().slice(0, 600),
     plan
   };
 
