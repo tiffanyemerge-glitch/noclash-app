@@ -1,13 +1,36 @@
+<%
+  // Site-wide SEO defaults — any route can override by passing metaTitle / metaDescription /
+  // metaImage / ogType / jsonLd to res.render(); everything here falls back sensibly when a
+  // route doesn't (which is most of them), so this file is the one place that has to know that.
+  var pageTitle = locals.metaTitle || (title + ' · NoClash');
+  var pageDescription = locals.metaDescription || 'NoClash is the shared community events calendar — see what\'s already on the books in your city before you pick a date, browse local events, or post your own.';
+  var pageImage = locals.metaImage || 'https://images.unsplash.com/photo-1723743809861-0e035898de75?auto=format&fit=crop&w=1200&h=630&q=80';
+  var pageOgType = locals.ogType || 'website';
+%>
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><%= title %> &middot; NoClash</title>
+  <title><%= pageTitle %></title>
+  <meta name="description" content="<%= pageDescription %>">
+  <link rel="canonical" href="<%= canonicalUrl %>">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="alternate icon" href="/favicon.ico">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="/styles.css">
+
+  <meta property="og:site_name" content="NoClash">
+  <meta property="og:type" content="<%= pageOgType %>">
+  <meta property="og:title" content="<%= pageTitle %>">
+  <meta property="og:description" content="<%= pageDescription %>">
+  <meta property="og:image" content="<%= pageImage %>">
+  <meta property="og:url" content="<%= canonicalUrl %>">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="<%= pageTitle %>">
+  <meta name="twitter:description" content="<%= pageDescription %>">
+  <meta name="twitter:image" content="<%= pageImage %>">
+  <% if (locals.jsonLd) { %><script type="application/ld+json"><%- jsonLd %></script><% } %>
 </head>
 <body>
 <div class="app">
