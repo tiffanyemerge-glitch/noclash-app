@@ -3,7 +3,12 @@ const mailer = require('../lib/mailer');
 const router = express.Router();
 
 router.get('/contact', (req, res) => {
-  res.render('contact', { title: 'Contact Us', values: {}, errors: [] });
+  res.render('contact', {
+    title: 'Contact Us',
+    values: {},
+    errors: [],
+    metaDescription: 'Get in touch with the NoClash team — questions about listings, the Ambassador Program, or anything else.'
+  });
 });
 
 router.post('/contact', async (req, res) => {
@@ -18,7 +23,12 @@ router.post('/contact', async (req, res) => {
   if (!phone) errors.push('Enter your phone number.');
 
   if (errors.length) {
-    return res.render('contact', { title: 'Contact Us', values: { name, email, phone, message }, errors });
+    return res.render('contact', {
+      title: 'Contact Us',
+      values: { name, email, phone, message },
+      errors,
+      metaDescription: 'Get in touch with the NoClash team — questions about listings, the Ambassador Program, or anything else.'
+    });
   }
 
   try {
@@ -31,7 +41,8 @@ router.post('/contact', async (req, res) => {
     res.render('contact', {
       title: 'Contact Us',
       values: { name, email, phone, message },
-      errors: ['Could not send your message right now — please try again in a moment.']
+      errors: ['Could not send your message right now — please try again in a moment.'],
+      metaDescription: 'Get in touch with the NoClash team — questions about listings, the Ambassador Program, or anything else.'
     });
   }
 });
