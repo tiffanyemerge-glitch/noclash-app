@@ -23,21 +23,50 @@
     </div>
     <div class="field-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
       <div class="field">
+        <label for="endTime">End time <span style="text-transform:none; font-weight:400;">(optional)</span></label>
+        <input type="time" id="endTime" name="endTime" value="<%= event.endTime || '' %>">
+      </div>
+      <div class="field">
+        <label for="expectedAttendance">Expected attendance <span style="text-transform:none; font-weight:400;">(optional)</span></label>
+        <input type="number" id="expectedAttendance" name="expectedAttendance" min="0" value="<%= event.expectedAttendance || '' %>">
+      </div>
+    </div>
+    <label class="checkline">
+      <input type="checkbox" name="isVirtual" id="isVirtual" <%= event.isVirtual ? 'checked' : '' %> onchange="document.getElementById('venue-field').style.display = this.checked ? 'none' : ''; document.getElementById('city-state-row').style.display = this.checked ? 'none' : '';"> This is a virtual / online event
+    </label>
+    <div class="field-row" id="city-state-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="field">
         <label for="city">City</label>
-        <input type="text" id="city" name="city" value="<%= event.city %>" required>
+        <input type="text" id="city" name="city" value="<%= event.city %>">
       </div>
       <div class="field">
         <label for="state">State</label>
-        <select id="state" name="state" required>
+        <select id="state" name="state">
           <% usStates.forEach(s => { %><option value="<%= s.value %>" <%= event.state === s.value ? 'selected' : '' %>><%= s.label %> (<%= s.value %>)</option><% }) %>
         </select>
       </div>
+    </div>
+    <div class="field" id="venue-field">
+      <label for="venue">Venue name or address <span style="text-transform:none; font-weight:400;">(optional, but helps us catch nearby clashes)</span></label>
+      <input type="text" id="venue" name="venue" value="<%= event.venue || '' %>" placeholder="e.g. 123 Main St or The Norva">
     </div>
     <div class="field">
       <label for="category">Category</label>
       <select id="category" name="category">
         <% categories.forEach(c => { %><option value="<%= c.value %>" <%= event.category === c.value ? 'selected' : '' %>><%= c.label %></option><% }) %>
       </select>
+    </div>
+    <div class="field-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="field">
+        <label for="tags">Tags <span style="text-transform:none; font-weight:400;">(optional, comma-separated, up to 5)</span></label>
+        <input type="text" id="tags" name="tags" value="<%= Array.isArray(event.tags) ? event.tags.join(', ') : (event.tags || '') %>">
+      </div>
+      <div class="field">
+        <label for="audienceType">Who's this for</label>
+        <select id="audienceType" name="audienceType">
+          <% audienceTypes.forEach(a => { %><option value="<%= a.value %>" <%= event.audienceType === a.value ? 'selected' : '' %>><%= a.label %></option><% }) %>
+        </select>
+      </div>
     </div>
     <div class="field">
       <label for="description">Description <span style="text-transform:none; font-weight:400;">(optional)</span></label>
