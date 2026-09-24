@@ -2,7 +2,7 @@
 
 <p class="eyebrow"><%= event.categoryLabel %><% if (event.status !== 'published') { %> &middot; <span class="status-pill <%= event.status %>"><%= event.status %></span><% } %></p>
 <h1 class="section-title event-title"><%= event.name %></h1>
-<p class="event-meta-line"><%= event.dateLabel %> &middot; <%= event.timeLabel %> &middot; <%= event.locationLabel %></p>
+<p class="event-meta-line"><%= event.dateLabel %> &middot; <%= event.timeLabel %> &middot; <% if (event.isVirtual) { %>Online / virtual<% } else { %><% if (event.venue) { %><%= event.venue %> &middot; <% } %><%= event.locationLabel %><% } %></p>
 
 <div class="post-grid">
   <div>
