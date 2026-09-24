@@ -3,8 +3,18 @@ const bcrypt = require('bcryptjs');
 const db = require('../lib/db');
 const { requireRole } = require('../lib/auth');
 const payments = require('../lib/payments');
+const { geocode } = require('../lib/geocoding');
+const { checkConflicts } = require('../lib/conflictScoring');
 const { asyncRoute } = require('../lib/asyncRoute');
 const router = express.Router();
+
+function parseTags(raw) {
+  return String(raw || '')
+    .split(',')
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .slice(0, 5);
+}
 
 function fmtDate(iso) {
   return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -120,16 +130,18 @@ router.get('/dashboard/events/:id/edit', requireRole('organizer'), asyncRoute(as
     req.session.flashType = 'error';
     return res.redirect('/dashboard');
   }
-  res.render('edit-event', { title: 'Edit Listing', event, categories: db.CATEGORIES, usStates: db.US_STATES, errors: [] });
+  res.render('edit-event', { title: 'Edit Listing', event, categories: db.CATEGORIES, usStates: db.US_STATES, audienceTypes: db.AUDIENCE_TYPES, errors: [] });
 }));
 
 router.post('/dashboard/events/:id/edit', requireRole('organizer'), asyncRoute(async (req, res) => {
-  const { name, date, startTime, city, state, category, link, description } = req.body;
+  const { name, date, startTime, endTime, city, state, category, link, description, venue, audienceType, expectedAttendance } = req.body;
   const noLink = req.body.noLink === 'on';
+  const isVirtual = req.body.isVirtual === 'on';
+  const tags = parseTags(req.body.tags);
   const errors = [];
   if (!name) errors.push('Enter an event name.');
   if (!date) errors.push('Enter a date.');
-  if (!city || !state) errors.push('Enter a city and state.');
+  if (!isVirtual && (!city || !state)) errors.push('Enter a city and state.');
 
   const existing = (await db.eventsForOrganizer(res.locals.currentUser.id)).find((e) => e.id === req.params.id);
   if (!existing) {
@@ -141,24 +153,57 @@ router.post('/dashboard/events/:id/edit', requireRole('organizer'), asyncRoute(a
   if (errors.length) {
     return res.status(400).render('edit-event', {
       title: 'Edit Listing',
-      event: { ...existing, name, date, startTime, city, state, category, link, description },
+      event: { ...existing, name, date, startTime, endTime, city, state, category, link, description, venue, audienceType, expectedAttendance, isVirtual, tags: tags.join(', ') },
       categories: db.CATEGORIES,
       usStates: db.US_STATES,
+      audienceTypes: db.AUDIENCE_TYPES,
       errors
     });
   }
 
-  await db.updateEvent(req.params.id, res.locals.currentUser.id, {
+  // Re-geocode whenever there's an address to resolve — cheap (cached) and simpler than trying to
+  // detect exactly which fields changed, and it keeps a listing's coordinates fresh if the
+  // organizer fixes a typo in the address after the fact.
+  let lat = existing.lat;
+  let lng = existing.lng;
+  if (isVirtual) {
+    lat = null;
+    lng = null;
+  } else {
+    const point = await geocode({ venue: (venue || '').trim(), city: city.trim(), state: state.trim().toUpperCase() });
+    lat = point ? point.lat : null;
+    lng = point ? point.lng : null;
+  }
+
+  const updated = await db.updateEvent(req.params.id, res.locals.currentUser.id, {
     name,
     date,
     startTime,
-    city: city.trim(),
-    state: state.trim().toUpperCase(),
+    endTime: endTime || null,
+    city: isVirtual ? '' : city.trim(),
+    state: isVirtual ? '' : state.trim().toUpperCase(),
     category,
     link: noLink ? '' : link || '',
-    description: (description || '').trim().slice(0, 600)
+    description: (description || '').trim().slice(0, 600),
+    venue: (venue || '').trim(),
+    lat,
+    lng,
+    tags,
+    audienceType: audienceType || 'all_ages',
+    expectedAttendance: expectedAttendance ? parseInt(expectedAttendance, 10) : null,
+    isVirtual
   });
-  req.session.flash = 'Listing updated.';
+
+  // Re-run the near-conflict check now that date/time/venue/category may have changed, excluding
+  // this event itself from its own candidate list (see the spec's "Editing an existing event" edge
+  // case). Advisory only, same as at creation — this never blocks saving the edit.
+  const allEvents = await db.publishedEvents();
+  const result = checkConflicts(updated, allEvents, { excludeEventId: updated.id, organizerId: updated.organizerId });
+  await db.recordConflictFlags(updated.id, result.flagsAll);
+
+  req.session.flash = result.flags.length
+    ? `Listing updated. Heads up: ${result.flags.length} nearby event${result.flags.length > 1 ? 's' : ''} may compete for your audience — check the listing for details.`
+    : 'Listing updated.';
   res.redirect('/dashboard');
 }));
 
