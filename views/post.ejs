@@ -41,6 +41,7 @@ function qs(overrides) {
           <% if (!d) { %><span class="cal-day cal-blank"></span>
           <% } else { %>
             <a class="cal-day <%= d.count >= 2 ? 'busy' : d.count === 1 ? 'one' : '' %> <%= d.date === selectedDate ? 'selected' : '' %>"
+               data-date="<%= d.date %>"
                href="/post?<%= qs({ date: d.date }) %>"><%= d.day %><% if (d.count >= 2) { %><b><%= d.count %></b><% } %></a>
           <% } %>
         <% }) %>
@@ -115,9 +116,15 @@ function qs(overrides) {
           <label for="name">Event name</label>
           <input type="text" id="name" name="name" value="<%= values.name || '' %>" required>
         </div>
-        <div class="field">
-          <label for="startTime">Start time</label>
-          <input type="time" id="startTime" name="startTime" value="<%= values.startTime || '10:00' %>" required>
+        <div class="field-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="field">
+            <label for="startTime">Start time</label>
+            <input type="time" id="startTime" name="startTime" value="<%= values.startTime || '10:00' %>" required>
+          </div>
+          <div class="field">
+            <label for="endTime">End time <span style="text-transform:none; font-weight:400;">(optional)</span></label>
+            <input type="time" id="endTime" name="endTime" value="<%= values.endTime || '' %>">
+          </div>
         </div>
         <div class="field">
           <label for="category">Category</label>
@@ -125,6 +132,34 @@ function qs(overrides) {
             <% categories.forEach(c => { %><option value="<%= c.value %>"><%= c.label %></option><% }) %>
           </select>
         </div>
+        <label class="checkline">
+          <input type="checkbox" name="isVirtual" id="isVirtual"> This is a virtual / online event
+        </label>
+        <div class="field" id="venue-field">
+          <label for="venue">Venue name or address <span style="text-transform:none; font-weight:400;">(optional, but helps us catch nearby clashes)</span></label>
+          <input type="text" id="venue" name="venue" value="<%= values.venue || '' %>" placeholder="e.g. 123 Main St or The Norva">
+          <p class="hint">Used to check for events nearby on the same day. Without it, we can only compare by city.</p>
+        </div>
+        <div class="field">
+          <label for="tags">Tags <span style="text-transform:none; font-weight:400;">(optional, comma-separated, up to 5)</span></label>
+          <input type="text" id="tags" name="tags" value="<%= values.tags || '' %>" placeholder="e.g. live music, local makers">
+        </div>
+        <div class="field-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="field">
+            <label for="audienceType">Who's this for</label>
+            <select id="audienceType" name="audienceType">
+              <% audienceTypes.forEach(a => { %><option value="<%= a.value %>"><%= a.label %></option><% }) %>
+            </select>
+          </div>
+          <div class="field">
+            <label for="expectedAttendance">Expected attendance <span style="text-transform:none; font-weight:400;">(optional)</span></label>
+            <input type="number" id="expectedAttendance" name="expectedAttendance" min="0" value="<%= values.expectedAttendance || '' %>">
+          </div>
+        </div>
+
+        <div id="conflict-panel"></div>
+        <input type="hidden" id="seenFlagEventIds" name="seenFlagEventIds" value="">
+
         <div class="field">
           <label for="description">Description <span style="text-transform:none; font-weight:400;">(optional)</span></label>
           <textarea id="description" name="description" rows="3" maxlength="600" placeholder="A couple sentences about the event — what it is, who it's for. Shows on your event's page and helps it turn up in search."><%= values.description || '' %></textarea>
@@ -170,6 +205,7 @@ function qs(overrides) {
             <p class="hint">Demo mode &mdash; payments aren't set up, so nothing will actually be charged. See README.md to turn on real checkout.</p>
           <% } %>
           <button class="btn-primary block" type="submit" <%= selectedDate ? '' : 'disabled' %>><%= stripeConfigured ? 'Continue to payment' : 'Reserve this listing' %></button>
+          <p class="hint" id="submit-anyway-hint" style="display:none;">You can still submit. Clashes are just a heads-up.</p>
         </div>
       </form>
     </div>
@@ -186,6 +222,162 @@ function qs(overrides) {
       document.getElementById('post-duration-note').textContent = opt.dataset.duration;
     });
   });
+
+  // ---------- Near-Conflict Auto-Flag: live check, panel, date-picker dots ----------
+  // See the "NoClash — Near-Conflict Auto-Flag Spec" project doc. Date/city/state are fixed for
+  // this page load (picking a different one reloads the page via the calendar above), so the only
+  // things that trigger a live check are the fields inside the form itself.
+  (function () {
+    var ctx = { date: <%- JSON.stringify(selectedDate) %>, city: <%- JSON.stringify(city) %>, state: <%- JSON.stringify(state) %> };
+    var panel = document.getElementById('conflict-panel');
+    var seenInput = document.getElementById('seenFlagEventIds');
+    var submitHint = document.getElementById('submit-anyway-hint');
+    var venueField = document.getElementById('venue-field');
+    var isVirtualBox = document.getElementById('isVirtual');
+    var checkTimer = null;
+    var dotsTimer = null;
+
+    function toggleVirtual() {
+      venueField.style.display = isVirtualBox.checked ? 'none' : '';
+    }
+    isVirtualBox.addEventListener('change', toggleVirtual);
+    toggleVirtual();
+
+    function fieldValues() {
+      return {
+        date: ctx.date,
+        startTime: document.getElementById('startTime').value,
+        endTime: document.getElementById('endTime').value,
+        city: ctx.city,
+        state: ctx.state,
+        venue: document.getElementById('venue').value,
+        category: document.getElementById('category').value,
+        tags: document.getElementById('tags').value,
+        audienceType: document.getElementById('audienceType').value,
+        expectedAttendance: document.getElementById('expectedAttendance').value,
+        isVirtual: isVirtualBox.checked
+      };
+    }
+
+    function tierLabel(tier) { return tier === 'direct' ? 'Direct clash' : 'Near conflict'; }
+
+    function renderPanel(data) {
+      if (!data || !data.ready) { panel.innerHTML = ''; submitHint.style.display = 'none'; seenInput.value = ''; return; }
+
+      seenInput.value = data.flags.map(function (f) { return f.eventId; }).join(',');
+
+      if (!data.flags.length) {
+        panel.innerHTML = '<div class="conflict-box clear"><p class="lead clear">No clashes found nearby. Nice pick.</p></div>';
+        submitHint.style.display = 'none';
+        return;
+      }
+
+      submitHint.style.display = 'block';
+      var hasDirect = data.flags.some(function (f) { return f.tier === 'direct'; });
+      var header = hasDirect
+        ? 'Heads up: ' + data.flags.length + (data.flags.length === 1 ? ' event may' : ' events may') + ' compete for your audience'
+        : (data.flags.length === 1 ? '1 nearby event on this date' : data.flags.length + ' nearby events on this date');
+
+      var itemsHtml = data.flags.map(function (f) {
+        var venueBit = f.venue ? f.venue : (f.distanceMi != null ? f.distanceMi.toFixed(1) + ' mi away' : (f.city + ', ' + f.state));
+        var distBit = f.distanceMi != null ? f.distanceMi.toFixed(1) + ' mi away' : '';
+        return '' +
+          '<div class="conflict-item flag-item">' +
+            '<span>' +
+              '<span class="tier-badge ' + f.tier + '">' + tierLabel(f.tier) + '</span> ' +
+              '<a class="link" href="/events/' + f.slug + '" target="_blank" rel="noopener">' + f.title + '</a>' +
+              '<br><span class="hint" style="margin-top:2px;">' + f.date + ' &middot; ' + venueBit + (distBit && f.venue ? ' &middot; ' + distBit : '') + '<br>' + f.reason + '</span>' +
+            '</span>' +
+          '</div>';
+      }).join('');
+
+      var moreHtml = data.moreCount > 0
+        ? '<p class="conflict-note"><a class="link" href="/board?city=' + encodeURIComponent(ctx.city) + '&state=' + encodeURIComponent(ctx.state) + '&date=' + encodeURIComponent(ctx.date) + '">+' + data.moreCount + ' more event' + (data.moreCount > 1 ? 's' : '') + ' that day &rarr;</a></p>'
+        : '';
+
+      var clearHtml = data.clearDates && data.clearDates.length
+        ? '<div class="clear-dates"><span class="hint">Pick another date:</span> ' +
+          data.clearDates.map(function (d) {
+            var url = '/post?city=' + encodeURIComponent(ctx.city) + '&state=' + encodeURIComponent(ctx.state) + '&month=<%= monthParam %>&date=' + encodeURIComponent(d);
+            return '<a class="btn-outline-ink" style="padding:5px 10px;font-size:0.76rem;margin:4px 6px 0 0;display:inline-block;" href="' + url + '">' + d + '</a>';
+          }).join('') +
+          '</div>'
+        : '';
+
+      var ungeocodableHtml = data.ungeocodable
+        ? '<p class="conflict-note">Couldn\'t check nearby events by distance &mdash; add a fuller address above for a more precise check. Showing same-city results instead.</p>'
+        : '';
+
+      panel.innerHTML = '<div class="conflict-box"><p class="lead">' + header + '</p>' + itemsHtml + ungeocodableHtml + moreHtml + clearHtml + '</div>';
+    }
+
+    function runCheck() {
+      var v = fieldValues();
+      if (!ctx.date || !v.startTime || !v.category || (!v.isVirtual && !ctx.city)) { panel.innerHTML = ''; submitHint.style.display = 'none'; return; }
+      var params = new URLSearchParams(v);
+      fetch('/api/conflicts/check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString()
+      })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(renderPanel)
+        .catch(function () { /* live check is a nice-to-have — fail quietly, submission still works */ });
+    }
+
+    function scheduleCheck() {
+      clearTimeout(checkTimer);
+      checkTimer = setTimeout(runCheck, 500);
+    }
+
+    ['startTime', 'endTime', 'category', 'venue', 'tags', 'audienceType', 'expectedAttendance'].forEach(function (id) {
+      document.getElementById(id).addEventListener('input', scheduleCheck);
+      document.getElementById(id).addEventListener('change', scheduleCheck);
+    });
+    isVirtualBox.addEventListener('change', scheduleCheck);
+    if (ctx.date) runCheck();
+
+    // Date-picker dots: shade the calendar above once venue/category give the scorer something to
+    // work with. Re-runs (debounced) whenever venue/category/audience/tags/virtual change.
+    function applyDots(tiers) {
+      document.querySelectorAll('.cal-day[data-date]').forEach(function (el) {
+        el.querySelectorAll('.flag-dot').forEach(function (dot) { dot.remove(); });
+        var tier = tiers[el.dataset.date];
+        if (!tier) return;
+        var dot = document.createElement('i');
+        dot.className = 'flag-dot ' + tier;
+        el.appendChild(dot);
+      });
+    }
+
+    function runDots() {
+      if (!ctx.city && !isVirtualBox.checked) return;
+      var v = fieldValues();
+      if (!v.category) return;
+      var params = new URLSearchParams({
+        year: '<%= monthParam.slice(0,4) %>',
+        month: String(Number('<%= monthParam.slice(5,7) %>') - 1),
+        city: ctx.city, state: ctx.state, venue: v.venue, category: v.category,
+        audienceType: v.audienceType, tags: v.tags, isVirtual: String(v.isVirtual)
+      });
+      fetch('/api/conflicts/calendar?' + params.toString())
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) { if (data) applyDots(data.tiers || {}); })
+        .catch(function () {});
+    }
+
+    function scheduleDots() {
+      clearTimeout(dotsTimer);
+      dotsTimer = setTimeout(runDots, 500);
+    }
+
+    ['category', 'venue', 'tags', 'audienceType'].forEach(function (id) {
+      document.getElementById(id).addEventListener('input', scheduleDots);
+      document.getElementById(id).addEventListener('change', scheduleDots);
+    });
+    isVirtualBox.addEventListener('change', scheduleDots);
+    if (document.getElementById('category').value) runDots();
+  })();
 </script>
 
 <%- include('partials/bottom') %>
