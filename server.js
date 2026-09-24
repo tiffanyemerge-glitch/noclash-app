@@ -52,6 +52,7 @@ app.use('/', require('./routes/board'));
 app.use('/', require('./routes/pricing'));
 app.use('/', require('./routes/auth'));
 app.use('/', require('./routes/post'));
+app.use('/', require('./routes/conflicts'));
 app.use('/', require('./routes/dashboard'));
 app.use('/', require('./routes/account'));
 app.use('/', require('./routes/contact'));
