@@ -3,6 +3,8 @@ const db = require('../lib/db');
 const { requireRole } = require('../lib/auth');
 const { eventsOnDate, monthCounts } = require('../lib/availability');
 const { checkExternalProviders, ticketmasterConfigured } = require('../lib/externalEvents');
+const { geocode } = require('../lib/geocoding');
+const { checkConflicts } = require('../lib/conflictScoring');
 const payments = require('../lib/payments');
 const { asyncRoute } = require('../lib/asyncRoute');
 const router = express.Router();
@@ -15,6 +17,14 @@ function fmtTime(hhmm) {
 }
 function fmtDateLong(iso) {
   return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+}
+
+function parseTags(raw) {
+  return String(raw || '')
+    .split(',')
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .slice(0, 5);
 }
 
 router.get('/post', requireRole('organizer'), asyncRoute(async (req, res) => {
@@ -75,6 +85,7 @@ router.get('/post', requireRole('organizer'), asyncRoute(async (req, res) => {
     stripeConfigured: payments.isConfigured(),
     categories: db.CATEGORIES,
     usStates: db.US_STATES,
+    audienceTypes: db.AUDIENCE_TYPES,
     PLANS: db.PLANS,
     hasPass: !!(res.locals.currentUser.passActiveUntil && res.locals.currentUser.passActiveUntil > db.todayISO()),
     values: {},
@@ -82,14 +93,40 @@ router.get('/post', requireRole('organizer'), asyncRoute(async (req, res) => {
   });
 }));
 
+// Shared by every path that actually creates the event (pass, demo mode, and the Stripe-confirmed
+// payment): geocodes the venue if that hasn't already happened, creates the row, then runs the
+// authoritative server-side near-conflict check and stores every flag it finds — regardless of
+// whether the organizer ever saw the live in-form panel (e.g. JS was off, or they submitted
+// faster than the debounce). Flags are always advisory; this never blocks creation.
+async function createEventWithConflictCheck(pendingEvent, seenFlagEventIds) {
+  const event = await db.createEvent(pendingEvent);
+
+  const allEvents = await db.publishedEvents();
+  const result = checkConflicts(
+    { ...event, venue: event.venue },
+    allEvents,
+    { excludeEventId: event.id, organizerId: event.organizerId }
+  );
+  if (result.flagsAll.length) {
+    await db.recordConflictFlags(event.id, result.flagsAll);
+  }
+
+  const seen = new Set(seenFlagEventIds || []);
+  const hasUnseenFlag = result.flagsAll.some((f) => !seen.has(f.event.id));
+  return { event, flags: result.flags, hasUnseenFlag };
+}
+
 router.post('/post', requireRole('organizer'), asyncRoute(async (req, res) => {
-  const { name, date, city, state, startTime, category, link, plan, description } = req.body;
+  const { name, date, city, state, startTime, endTime, category, link, plan, description, venue, audienceType, expectedAttendance } = req.body;
   const noLink = req.body.noLink === 'on';
+  const isVirtual = req.body.isVirtual === 'on';
+  const tags = parseTags(req.body.tags);
+  const seenFlagEventIds = String(req.body.seenFlagEventIds || '').split(',').filter(Boolean);
   const errors = [];
 
   if (!name) errors.push('Enter an event name.');
   if (!date) errors.push('Pick a date from the calendar above.');
-  if (!city || !state) errors.push('Enter a city and state.');
+  if (!isVirtual && (!city || !state)) errors.push('Enter a city and state.');
   if (!startTime) errors.push('Enter a start time.');
   if (!['basic', 'standard', 'featured', 'pass'].includes(plan)) errors.push('Choose how you\'re paying.');
 
@@ -104,36 +141,61 @@ router.post('/post', requireRole('organizer'), asyncRoute(async (req, res) => {
 
   if (errors.length) return backToPost();
 
+  // Geocode the venue/address now (once), so it's ready whichever path below actually creates the
+  // event — including the Stripe-deferred one, where the record sits in the session for a bit.
+  let lat = null;
+  let lng = null;
+  if (!isVirtual) {
+    const point = await geocode({ venue: (venue || '').trim(), city: city.trim(), state: state.trim().toUpperCase() });
+    if (point) {
+      lat = point.lat;
+      lng = point.lng;
+    }
+  }
+
   const pendingEvent = {
     organizerId: user.id,
     name,
     date,
     startTime,
-    city: city.trim(),
-    state: state.trim().toUpperCase(),
+    endTime: endTime || null,
+    city: isVirtual ? '' : city.trim(),
+    state: isVirtual ? '' : state.trim().toUpperCase(),
     category,
     link: noLink ? '' : (link || ''),
     description: (description || '').trim().slice(0, 600),
+    venue: (venue || '').trim(),
+    lat,
+    lng,
+    tags,
+    audienceType: audienceType || 'all_ages',
+    expectedAttendance: expectedAttendance ? parseInt(expectedAttendance, 10) : null,
+    isVirtual,
     plan
   };
 
   // covered by an existing pass — no charge, post it right away
   if (plan === 'pass') {
-    const event = await db.createEvent(pendingEvent);
-    req.session.flash = `"${event.name}" is posted — covered by your Organizer Pass.`;
+    const { event, hasUnseenFlag } = await createEventWithConflictCheck(pendingEvent, seenFlagEventIds);
+    req.session.flash = hasUnseenFlag
+      ? `"${event.name}" is posted — covered by your Organizer Pass. Heads up: another event was posted nearby since you last checked — worth a look from your dashboard.`
+      : `"${event.name}" is posted — covered by your Organizer Pass.`;
     return res.redirect('/dashboard');
   }
 
   // payments aren't set up — keep the old demo behavior so the app still works without Stripe
   if (!payments.isConfigured()) {
-    const event = await db.createEvent(pendingEvent);
-    req.session.flash = `"${event.name}" is posted. (Demo mode — payments aren't configured yet, so $${db.PLANS[plan].price} was not actually charged. See README.md to turn on real checkout.)`;
+    const { event, hasUnseenFlag } = await createEventWithConflictCheck(pendingEvent, seenFlagEventIds);
+    req.session.flash = `"${event.name}" is posted. (Demo mode — payments aren't configured yet, so $${db.PLANS[plan].price} was not actually charged. See README.md to turn on real checkout.)` +
+      (hasUnseenFlag ? ' Heads up: another event was posted nearby since you last checked — worth a look from your dashboard.' : '');
     return res.redirect('/dashboard');
   }
 
-  // real payment: hold the event details in the session and send the organizer to Stripe.
-  // The event itself isn't created until /post/confirm verifies the charge actually went through.
+  // real payment: hold the event details (and its geocode + seen-flags) in the session and send
+  // the organizer to Stripe. The event itself isn't created until /post/confirm verifies the
+  // charge actually went through.
   req.session.pendingEvent = pendingEvent;
+  req.session.pendingEventSeenFlags = seenFlagEventIds;
   const baseUrl = `${req.protocol}://${req.get('host')}`;
   try {
     const checkoutSession = await payments.createListingCheckout({
@@ -156,6 +218,7 @@ router.post('/post', requireRole('organizer'), asyncRoute(async (req, res) => {
 router.get('/post/confirm', requireRole('organizer'), asyncRoute(async (req, res) => {
   const sessionId = req.query.session_id;
   const pending = req.session.pendingEvent;
+  const seenFlagEventIds = req.session.pendingEventSeenFlags || [];
 
   if (!sessionId || !pending) {
     req.session.flash = 'Nothing to confirm — start posting again.';
@@ -170,9 +233,11 @@ router.get('/post/confirm', requireRole('organizer'), asyncRoute(async (req, res
       req.session.flashType = 'error';
       return res.redirect('/post');
     }
-    const event = await db.createEvent(pending);
+    const { event, hasUnseenFlag } = await createEventWithConflictCheck(pending, seenFlagEventIds);
     delete req.session.pendingEvent;
-    req.session.flash = `"${event.name}" is posted — $${(checkoutSession.amount_total / 100).toFixed(2)} charged.`;
+    delete req.session.pendingEventSeenFlags;
+    req.session.flash = `"${event.name}" is posted — $${(checkoutSession.amount_total / 100).toFixed(2)} charged.` +
+      (hasUnseenFlag ? ' Heads up: another event was posted nearby since you last checked — worth a look from your dashboard.' : '');
     res.redirect('/dashboard');
   } catch (err) {
     req.session.flash = 'Could not confirm your payment with Stripe. If your card was charged and this keeps happening, check the server logs.';
