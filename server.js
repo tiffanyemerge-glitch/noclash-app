@@ -49,6 +49,7 @@ app.use((req, res, next) => {
 
 app.use('/', require('./routes/home'));
 app.use('/', require('./routes/board'));
+app.use('/', require('./routes/cities'));
 app.use('/', require('./routes/pricing'));
 app.use('/', require('./routes/auth'));
 app.use('/', require('./routes/post'));
