@@ -1,0 +1,17 @@
+<%- include('partials/top') %>
+
+<p class="eyebrow">Hampton Roads &middot; free to browse</p>
+<h1 class="section-title">Hampton Roads events, by city</h1>
+<p class="section-sub">NoClash tracks events across the region so organizers can see what's already on the books before they pick a date. Pick a city below to browse its calendar and post your own &mdash; or <a href="/board">search the whole board</a> across every city and state at once.</p>
+
+<div class="city-grid">
+  <% cities.forEach(c => { %>
+    <a class="city-card" href="/cities/<%= c.slug %>">
+      <h3><%= c.name %>, VA</h3>
+      <p><%= c.blurb %></p>
+      <span class="count"><%= c.eventCount %> upcoming event<%= c.eventCount === 1 ? '' : 's' %> on NoClash</span>
+    </a>
+  <% }) %>
+</div>
+
+<%- include('partials/bottom') %>
