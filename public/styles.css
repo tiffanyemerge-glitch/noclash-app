@@ -326,3 +326,25 @@ footer.note { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--l
 .promo-url-row-compact { margin: 0; max-width: 280px; }
 .promo-url-row-compact .promo-url-input { font-size: 0.74rem; padding: 6px 8px; }
 .share-row { margin: 4px 0 14px; }
+
+/* ---------- locality (city) pages ---------- */
+.breadcrumb-nav { font-family: 'IBM Plex Mono', monospace; font-size: 0.76rem; color: var(--ink-soft); margin: 0 0 16px; }
+.breadcrumb-nav a { color: inherit; text-decoration: underline; }
+.breadcrumb-nav .sep { margin: 0 6px; opacity: 0.5; }
+
+.city-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin: 20px 0; }
+.city-card {
+  background: var(--paper-soft); border: 1px solid var(--line); border-radius: 12px; padding: 20px;
+  display: flex; flex-direction: column; gap: 8px; text-decoration: none; color: inherit; transition: border-color 0.15s;
+}
+.city-card:hover { border-color: var(--pin-gold); }
+.city-card h3 { margin: 0; font-size: 1.05rem; }
+.city-card p { margin: 0; font-size: 0.85rem; color: var(--ink-soft); line-height: 1.45; }
+.city-card .count { font-family: 'IBM Plex Mono', monospace; font-size: 0.74rem; color: var(--ok-green); font-weight: 600; margin-top: auto; padding-top: 4px; }
+
+.related-cities { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.related-cities a {
+  border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 0.82rem;
+  text-decoration: none; color: var(--ink-soft); background: var(--surface); transition: border-color 0.15s, color 0.15s;
+}
+.related-cities a:hover { border-color: var(--pin-gold); color: var(--ink); }
