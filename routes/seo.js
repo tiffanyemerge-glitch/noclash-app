@@ -3,6 +3,7 @@
 const express = require('express');
 const db = require('../lib/db');
 const { asyncRoute } = require('../lib/asyncRoute');
+const { CITIES } = require('../lib/hamptonRoadsCities');
 const router = express.Router();
 
 // Public, evergreen marketing/browse pages worth listing. Anything account-specific
@@ -10,6 +11,7 @@ const router = express.Router();
 const STATIC_PATHS = [
   { path: '/', changefreq: 'weekly', priority: '1.0' },
   { path: '/board', changefreq: 'hourly', priority: '0.9' },
+  { path: '/cities', changefreq: 'weekly', priority: '0.8' },
   { path: '/post', changefreq: 'monthly', priority: '0.6' },
   { path: '/pricing', changefreq: 'monthly', priority: '0.5' },
   { path: '/ambassadors', changefreq: 'monthly', priority: '0.4' },
@@ -28,6 +30,7 @@ router.get('/sitemap.xml', asyncRoute(async (req, res) => {
 
   const urls = [
     ...STATIC_PATHS.map((p) => ({ loc: `${siteUrl}${p.path}`, changefreq: p.changefreq, priority: p.priority })),
+    ...CITIES.map((c) => ({ loc: `${siteUrl}/cities/${c.slug}`, changefreq: 'daily', priority: '0.7' })),
     ...events.map((e) => ({ loc: `${siteUrl}/events/${e.slug}`, changefreq: 'daily', priority: '0.8', lastmod: e.date }))
   ];
 
