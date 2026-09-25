@@ -1,0 +1,69 @@
+<%- include('partials/top') %>
+
+<p class="breadcrumb-nav"><a href="/">Home</a><span class="sep">/</span><a href="/cities">Cities</a><span class="sep">/</span><%= locationLabel %></p>
+
+<p class="eyebrow">Hampton Roads &middot; <%= locationLabel %></p>
+<h1 class="section-title"><%= locationLabel %> Events Calendar</h1>
+<p class="section-sub"><%= city.blurb %></p>
+<p class="section-sub">See what's already on the books in <%= city.name %> before you pick a date &mdash; free to browse, no account needed.</p>
+
+<div class="home-cta-row" style="margin-bottom: 34px;">
+  <a class="btn-gold" href="/board?city=<%= encodeURIComponent(city.name) %>&state=<%= city.state %>">Browse the full <%= city.name %> board</a>
+  <a class="btn-outline-ink" href="/post?city=<%= encodeURIComponent(city.name) %>&state=<%= city.state %>">Post an event in <%= city.name %></a>
+</div>
+
+<section class="block">
+  <p class="eyebrow">On NoClash</p>
+  <h2 class="section-title">Upcoming events in <%= city.name %></h2>
+  <% if (cityEvents.length === 0) { %>
+    <div class="board-surface">
+      <p class="board-empty">No events posted in <%= city.name %> yet &mdash; be the first. <a href="/post?city=<%= encodeURIComponent(city.name) %>&state=<%= city.state %>">Post one from $1 &rarr;</a></p>
+    </div>
+  <% } else { %>
+    <div class="card-row">
+      <% cityEvents.forEach(e => { %>
+        <article class="flyer">
+          <span class="cat"><%= e.categoryLabel %></span>
+          <h3><a class="flyer-title-link" href="/events/<%= e.slug %>"><%= e.name %></a></h3>
+          <div class="meta"><span><%= e.dateLabel %></span><span><%= e.timeLabel %></span></div>
+          <a class="link" href="/events/<%= e.slug %>">Event details &rarr;</a>
+        </article>
+      <% }) %>
+    </div>
+  <% } %>
+</section>
+
+<% if (cityFeed) { %>
+<section class="block">
+  <p class="eyebrow">Public Search</p>
+  <h2 class="section-title">From the City of <%= city.name %>'s own calendar</h2>
+  <% if (cityFeed.error) { %>
+    <p class="flash error"><%= cityFeed.error %></p>
+  <% } else if (cityFeed.events.length === 0) { %>
+    <p class="section-sub">Nothing on <%= city.name %>'s own public calendar right now.</p>
+  <% } else { %>
+    <div class="card-row">
+      <% cityFeed.events.forEach(e => { %>
+        <article class="flyer public-flyer">
+          <span class="cat">Public Search &middot; <%= cityFeed.provider %></span>
+          <h3><%= e.name %></h3>
+          <div class="meta"><% if (e.venue) { %><span><%= e.venue %></span><% } %><span><%= e.dateLabel %></span></div>
+          <% if (e.url) { %><a class="link" href="<%= e.url %>" target="_blank" rel="noopener">View event &rarr;</a><% } else { %><span class="no-link">Details coming soon</span><% } %>
+        </article>
+      <% }) %>
+    </div>
+  <% } %>
+  <p class="hint">Pulled live from <%= city.name %>'s public events calendar &mdash; nothing is copied into NoClash's database.</p>
+</section>
+<% } %>
+
+<section class="block">
+  <p class="eyebrow">Nearby</p>
+  <h2 class="section-title">Other Hampton Roads cities</h2>
+  <div class="related-cities">
+    <a href="/cities">All cities</a>
+    <% otherCities.forEach(c => { %><a href="/cities/<%= c.slug %>"><%= c.name %>, VA</a><% }) %>
+  </div>
+</section>
+
+<%- include('partials/bottom') %>
