@@ -10,8 +10,13 @@
   <% } else { %>
     <p class="card-sub">No Organizer Pass yet. $49/year for unlimited postings.</p>
     <form method="post" action="/dashboard/pass/activate">
+      <div class="field" style="max-width:220px;">
+        <label for="discountCode">Partner code (optional)</label>
+        <input type="text" id="discountCode" name="discountCode" placeholder="e.g. CHAMBER">
+      </div>
       <button class="btn-gold" type="submit"><%= stripeConfigured ? 'Buy Organizer Pass — $49' : 'Activate demo pass' %></button>
     </form>
+    <p class="hint">Chamber of Commerce member? Enter code <strong>CHAMBER</strong> for 10% off ($44.10).</p>
     <% if (stripeConfigured) { %>
       <p class="hint">Takes you to Stripe to pay securely. Renews aren't automatic yet &mdash; you'll buy again next year.</p>
     <% } else { %>
