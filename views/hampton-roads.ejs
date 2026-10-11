@@ -1,0 +1,27 @@
+<%- include('partials/top') %>
+
+<p class="eyebrow">Hampton Roads &middot; free to browse</p>
+<h1 class="section-title">The Hampton Roads community events calendar</h1>
+<p class="section-sub">NoClash is the shared events calendar for Hampton Roads, Virginia organizers &mdash; one board covering all nine principal cities, so you can see what's already on the books before you pick a date. <%= postedCount %> event<%= postedCount === 1 ? '' : 's' %> posted by organizers so far<% if (totalTracked > 0) { %>, plus <%= totalTracked %> public event<%= totalTracked === 1 ? '' : 's' %> NoClash is already tracking from city calendars across the region<% } %>.</p>
+
+<div class="home-cta-row" style="margin-bottom: 30px;">
+  <a class="btn-gold" href="/board">Browse the full board</a>
+  <a class="btn-outline-ink" href="/post">Post an event</a>
+</div>
+
+<section class="block">
+  <p class="eyebrow">Coverage</p>
+  <h2 class="section-title">All nine principal Hampton Roads cities</h2>
+  <p class="section-sub">Norfolk, Virginia Beach, Chesapeake, Portsmouth, Suffolk, Hampton, Newport News, Williamsburg, and Poquoson &mdash; each with its own page, plus a live pull from Ticketmaster and, where a city publishes one, straight from that city's own public events calendar.</p>
+  <div class="related-cities">
+    <% cities.forEach(c => { %><a href="/cities/<%= c.slug %>"><%= c.name %>, VA</a><% }) %>
+  </div>
+</section>
+
+<section class="block">
+  <p class="eyebrow">How it's different</p>
+  <h2 class="section-title">A conflict checker, not just a listings feed</h2>
+  <p class="section-sub">Before you post, pick your city and a full month view shows which days already have events booked &mdash; a red pin means something's already on, a green pin means the coast is clear. See how NoClash compares to <a href="/vs/facebook-events">Facebook Events</a> and <a href="/vs/eventbrite">Eventbrite</a>.</p>
+</section>
+
+<%- include('partials/bottom') %>
