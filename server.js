@@ -48,9 +48,11 @@ app.use((req, res, next) => {
 });
 
 app.use('/', require('./routes/home'));
+app.use('/', require('./routes/about'));
 app.use('/', require('./routes/board'));
 app.use('/', require('./routes/cities'));
 app.use('/', require('./routes/pricing'));
+app.use('/', require('./routes/vs'));
 app.use('/', require('./routes/auth'));
 app.use('/', require('./routes/post'));
 app.use('/', require('./routes/conflicts'));
