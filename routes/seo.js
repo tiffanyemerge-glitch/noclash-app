@@ -12,6 +12,10 @@ const STATIC_PATHS = [
   { path: '/', changefreq: 'weekly', priority: '1.0' },
   { path: '/board', changefreq: 'hourly', priority: '0.9' },
   { path: '/cities', changefreq: 'weekly', priority: '0.8' },
+  { path: '/hampton-roads-events-calendar', changefreq: 'weekly', priority: '0.8' },
+  { path: '/about', changefreq: 'monthly', priority: '0.5' },
+  { path: '/vs/facebook-events', changefreq: 'monthly', priority: '0.5' },
+  { path: '/vs/eventbrite', changefreq: 'monthly', priority: '0.5' },
   { path: '/post', changefreq: 'monthly', priority: '0.6' },
   { path: '/pricing', changefreq: 'monthly', priority: '0.5' },
   { path: '/ambassadors', changefreq: 'monthly', priority: '0.4' },
@@ -44,6 +48,32 @@ router.get('/sitemap.xml', asyncRoute(async (req, res) => {
   res.set('Content-Type', 'application/xml');
   res.send(body);
 }));
+
+// llms.txt — a plain-text summary for AI assistants and crawlers, same idea as robots.txt but for
+// LLMs rather than search spiders (site audit D5.5: this 404'd before). Regenerated per request,
+// same as the sitemap, so it never drifts from the site's actual canonical URLs.
+router.get('/llms.txt', (req, res) => {
+  const siteUrl = res.locals.siteUrl;
+  res.set('Content-Type', 'text/plain');
+  res.send(
+    `# NoClash
+
+> NoClash is a free community events calendar for Hampton Roads, Virginia. Organizers check what's already scheduled in their city before picking a date, then post their own listing from $1. Browsing is always free, no account required.
+
+## Key pages
+
+- [Home](${siteUrl}/): What NoClash is and how it works.
+- [Board](${siteUrl}/board): Browse and filter every listed event by city, state, date, and category; see which days already have events booked.
+- [Cities](${siteUrl}/cities): Hampton Roads events by city — Norfolk, Virginia Beach, Chesapeake, Portsmouth, Suffolk, Hampton, Newport News, Williamsburg, and Poquoson.
+- [Hampton Roads community events calendar](${siteUrl}/hampton-roads-events-calendar): Region-wide overview of NoClash's coverage.
+- [Pricing](${siteUrl}/pricing): Listings from $1–$5 per event, or $49/year for unlimited postings with the Organizer Pass.
+- [Post an event](${siteUrl}/post): Organizers list an event after checking the conflict calendar.
+- [About](${siteUrl}/about): Who built NoClash and why.
+- [NoClash vs Facebook Events](${siteUrl}/vs/facebook-events)
+- [NoClash vs Eventbrite](${siteUrl}/vs/eventbrite)
+`
+  );
+});
 
 router.get('/robots.txt', (req, res) => {
   res.set('Content-Type', 'text/plain');

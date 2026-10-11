@@ -4,6 +4,7 @@ const { monthCounts, groupByDateThenCity } = require('../lib/availability');
 const { asyncRoute } = require('../lib/asyncRoute');
 const { checkTicketmasterCity } = require('../lib/externalEvents');
 const { checkHamptonRoadsCity, isHamptonRoadsCity } = require('../lib/hamptonRoadsEvents');
+const { getHamptonRoadsTrackedSummary } = require('../lib/trackedEventsSummary');
 const router = express.Router();
 
 function fmtDate(iso) {
@@ -24,6 +25,11 @@ function sameCity(a, b) {
 
 router.get('/board', asyncRoute(async (req, res) => {
   const events = await db.publishedEvents();
+
+  // See lib/trackedEventsSummary.js — a cached, region-wide count of public events pulled from
+  // each Hampton Roads city's own calendar, used below to reframe an empty filter result instead
+  // of just leaving it at "0 events" (site audit D3.1).
+  const trackedSummary = await getHamptonRoadsTrackedSummary();
 
   const filters = {
     city: (req.query.city || '').trim() || 'all',
@@ -162,6 +168,7 @@ router.get('/board', asyncRoute(async (req, res) => {
     view,
     groups,
     count: filtered.length,
+    regionTrackedCount: trackedSummary.totalCount,
     publicSearch,
     publicCount,
     calDays,
