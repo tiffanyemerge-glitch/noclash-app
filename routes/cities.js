@@ -9,6 +9,7 @@ const db = require('../lib/db');
 const { asyncRoute } = require('../lib/asyncRoute');
 const { CITIES, findCityBySlug } = require('../lib/hamptonRoadsCities');
 const { checkHamptonRoadsCity, isHamptonRoadsCity } = require('../lib/hamptonRoadsEvents');
+const { getHamptonRoadsTrackedSummary, trackedCountFor } = require('../lib/trackedEventsSummary');
 const router = express.Router();
 
 function fmtDate(iso) {
@@ -29,10 +30,17 @@ router.get('/cities', asyncRoute(async (req, res) => {
   const today = db.todayISO();
   const upcoming = events.filter((e) => e.date >= today);
 
+  // See lib/trackedEventsSummary.js: a cached, region-wide count of public events pulled from
+  // each city's own calendar, so a city with zero organizer-posted listings still shows real
+  // activity instead of a flat "0" (site audit D3.1).
+  const trackedSummary = await getHamptonRoadsTrackedSummary();
+
   const cities = CITIES.map((c) => ({
     ...c,
-    eventCount: upcoming.filter((e) => sameCity(e.city, c.name) && e.state === c.state).length
+    eventCount: upcoming.filter((e) => sameCity(e.city, c.name) && e.state === c.state).length,
+    trackedCount: trackedCountFor(c.name, trackedSummary)
   }));
+  const totalTracked = trackedSummary.totalCount;
 
   const siteUrl = res.locals.siteUrl;
   const jsonLd = JSON.stringify({
@@ -64,7 +72,28 @@ router.get('/cities', asyncRoute(async (req, res) => {
     metaTitle: 'Hampton Roads Events by City | NoClash',
     metaDescription: "Browse upcoming events in Norfolk, Virginia Beach, Chesapeake, Portsmouth, Suffolk, Hampton, Newport News, Williamsburg, and Poquoson — see what's on the books before you pick a date.",
     jsonLd,
-    cities
+    cities,
+    totalTracked
+  });
+}));
+
+// The category landing page the audit flagged as missing (D5.3): the single highest-leverage
+// SEO asset for this category, distinct from /cities (a directory of individual city pages) in
+// that it targets the region-wide search itself — "Hampton Roads community events calendar" —
+// with its own keyword-matching URL and content.
+router.get('/hampton-roads-events-calendar', asyncRoute(async (req, res) => {
+  const events = await db.publishedEvents();
+  const today = db.todayISO();
+  const upcoming = events.filter((e) => e.date >= today);
+  const trackedSummary = await getHamptonRoadsTrackedSummary();
+
+  res.render('hampton-roads', {
+    title: 'The Hampton Roads Community Events Calendar',
+    metaTitle: 'The Hampton Roads Community Events Calendar | NoClash',
+    metaDescription: "NoClash is the shared community events calendar for Hampton Roads, Virginia — browse listings across all nine principal cities, check for date conflicts, and post your own from $1.",
+    cities: CITIES,
+    postedCount: upcoming.length,
+    totalTracked: trackedSummary.totalCount
   });
 }));
 
