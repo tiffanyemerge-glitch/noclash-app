@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const db = require('../lib/db');
 const { requireRole } = require('../lib/auth');
 const payments = require('../lib/payments');
+const { applyPassDiscount } = require('../lib/discounts');
 const { geocode } = require('../lib/geocoding');
 const { checkConflicts } = require('../lib/conflictScoring');
 const { asyncRoute } = require('../lib/asyncRoute');
@@ -64,11 +65,17 @@ router.post('/dashboard/profile', requireRole('organizer'), asyncRoute(async (re
 }));
 
 router.post('/dashboard/pass/activate', requireRole('organizer'), asyncRoute(async (req, res) => {
+  // A blank/unrecognized code is not an error — applyPassDiscount just returns null and the
+  // Pass is bought at full price, same as if the field had been left out entirely.
+  const discount = applyPassDiscount(req.body.discountCode);
+
   // payments aren't set up — keep the free demo activation so the app still works without Stripe
   if (!payments.isConfigured()) {
     const oneYearOut = db.addDays(db.todayISO(), 365);
     await db.updateUser(res.locals.currentUser.id, { passActiveUntil: oneYearOut });
-    req.session.flash = 'Organizer Pass activated. (Demo mode — payments aren\'t configured yet, so no card was charged. See README.md.)';
+    req.session.flash = discount
+      ? `Organizer Pass activated with the ${discount.label} code. (Demo mode — payments aren't configured yet, so no card was charged. See README.md.)`
+      : 'Organizer Pass activated. (Demo mode — payments aren\'t configured yet, so no card was charged. See README.md.)';
     return res.redirect('/dashboard');
   }
 
@@ -77,7 +84,9 @@ router.post('/dashboard/pass/activate', requireRole('organizer'), asyncRoute(asy
     const checkoutSession = await payments.createPassCheckout({
       successUrl: `${baseUrl}/dashboard/pass/confirm?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${baseUrl}/dashboard`,
-      metadata: { organizerId: res.locals.currentUser.id }
+      metadata: { organizerId: res.locals.currentUser.id, discountCode: discount ? discount.code : '' },
+      priceCents: discount ? discount.priceCents : undefined,
+      discountLabel: discount ? discount.label : undefined
     });
     res.redirect(303, checkoutSession.url);
   } catch (err) {
