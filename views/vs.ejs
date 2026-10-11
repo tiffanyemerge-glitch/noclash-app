@@ -1,0 +1,28 @@
+<%- include('partials/top') %>
+
+<p class="breadcrumb-nav"><a href="/">Home</a><span class="sep">/</span><%= page.title %></p>
+
+<p class="eyebrow">Comparison</p>
+<h1 class="section-title"><%= page.title %></h1>
+<p class="section-sub"><%= page.intro %></p>
+
+<div class="vs-points">
+  <% page.points.forEach(p => { %>
+    <section class="vs-point">
+      <h2><%= p.heading %></h2>
+      <p><%= p.body %></p>
+    </section>
+  <% }) %>
+</div>
+
+<div class="vs-verdict">
+  <p class="eyebrow">Bottom line</p>
+  <p><%= page.verdict %></p>
+</div>
+
+<div class="home-cta-row" style="margin-top: 28px;">
+  <a class="btn-gold" href="/board">Browse the board</a>
+  <a class="btn-outline-ink" href="/pricing">See pricing</a>
+</div>
+
+<%- include('partials/bottom') %>
