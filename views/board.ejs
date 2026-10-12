@@ -45,6 +45,17 @@ function qs(overrides) {
   <p class="flash error">Public search: <%= publicSearch.error %></p>
 <% } %>
 
+<% if (count === 0 && !publicSearch.active) { %>
+  <p class="hint" style="margin:-4px 0 18px;">
+    Nothing posted by organizers yet for these filters.
+    <% if (regionTrackedCount > 0) { %>
+      NoClash is already tracking <strong><%= regionTrackedCount %></strong> public event<%= regionTrackedCount === 1 ? '' : 's' %> from Hampton Roads city calendars &mdash; pick a city above to see them alongside the board.
+    <% } else { %>
+      Pick a city above to pull in real, already-scheduled events from Ticketmaster and city calendars before you post.
+    <% } %>
+  </p>
+<% } %>
+
 <div class="view-toggle">
   <a class="view-btn <%= view === 'list' ? 'active' : '' %>" href="/board?<%= qs({ view: 'list' }) %>">List view</a>
   <a class="view-btn <%= view === 'calendar' ? 'active' : '' %>" href="/board?<%= qs({ view: 'calendar' }) %>">Full 30-day calendar</a>

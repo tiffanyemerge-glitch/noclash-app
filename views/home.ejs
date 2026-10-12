@@ -10,8 +10,22 @@
   </div>
 </div>
 
+<!--
+  TODO (flagged in the site-audit change log, D1.5/D2.1): this is still a stock photo, not the
+  product. The audit's suggested fix is a real screenshot of a populated month view — a red pin
+  ("two events already booked") and a green pin ("the coast is clear") — which only someone with
+  access to a populated board can capture. Swap the <img> below for that screenshot (keeping the
+  srcset/sizes pattern for mobile, D2.5) and rewrite the alt text to describe the checker itself
+  once it's available; left as a stock photo in the meantime rather than inventing one.
+-->
 <figure class="home-hero-photo">
-  <img src="https://images.unsplash.com/photo-1723743809861-0e035898de75?auto=format&fit=crop&w=1600&q=80" alt="A crowd of people gathered at an outdoor community event" loading="eager">
+  <img
+    src="https://images.unsplash.com/photo-1723743809861-0e035898de75?auto=format&fit=crop&w=1600&q=80"
+    srcset="https://images.unsplash.com/photo-1723743809861-0e035898de75?auto=format&fit=crop&w=800&q=80 800w,
+            https://images.unsplash.com/photo-1723743809861-0e035898de75?auto=format&fit=crop&w=1200&q=80 1200w,
+            https://images.unsplash.com/photo-1723743809861-0e035898de75?auto=format&fit=crop&w=1600&q=80 1600w"
+    sizes="(max-width: 700px) 100vw, 1140px"
+    alt="A crowd of people gathered at an outdoor community event" loading="eager">
   <figcaption>Photo by <a href="https://unsplash.com/@negley?utm_source=noclash&utm_medium=referral" target="_blank" rel="noopener">Negley Stockman</a> on <a href="https://unsplash.com/?utm_source=noclash&utm_medium=referral" target="_blank" rel="noopener">Unsplash</a></figcaption>
 </figure>
 
@@ -38,6 +52,25 @@
 </section>
 
 <section class="block">
+  <p class="eyebrow">Questions</p>
+  <h2 class="section-title">Before you post</h2>
+  <div class="faq-list">
+    <details class="faq-item">
+      <summary>The board looks empty near me — is it worth checking?</summary>
+      <p>Yes &mdash; even where no organizer has posted yet, NoClash is already pulling in public events from Ticketmaster and, for Hampton Roads cities, straight from each city's own events calendar (tagged <strong>Public Search</strong>). Pick your city on the <a href="/board">board</a> to see what's already scheduled before you add your own.</p>
+    </details>
+    <details class="faq-item">
+      <summary>Why does posting cost $1 if Facebook Events is free?</summary>
+      <p>A dollar keeps the board a curated, checked calendar instead of an open feed anyone can flood &mdash; and it pays for the conflict check that flags when another organizer already has your date and city. Browsing stays free either way.</p>
+    </details>
+    <details class="faq-item">
+      <summary>Who is NoClash for?</summary>
+      <p>Small-budget community organizers &mdash; PTAs, churches, nonprofits, neighborhood associations, school and civic groups. It's not built for professional event companies or venues running a packed commercial calendar. Read more on the <a href="/about">About</a> page.</p>
+    </details>
+  </div>
+</section>
+
+<section class="block">
   <p class="eyebrow">Pricing</p>
   <h2 class="section-title">Pick a listing tier, or go unlimited</h2>
   <div class="home-pricing-teaser">
@@ -58,7 +91,34 @@
       </ul>
     </div>
   </div>
+  <p class="hint">Free to browse, always &mdash; no credit card required. Edit or remove your listing anytime.</p>
   <p style="margin-top:14px;"><a class="btn-primary" href="/pricing">See full pricing &rarr;</a></p>
+</section>
+
+<!--
+  TODO (flagged in the site-audit change log, D3.2 — "Do this quarter"): no real organizer
+  testimonials exist yet, so this section is a clean stub, not invented quotes. Ask your first
+  few organizers for a one-line quote plus their name, role, and group (and a photo if they'll
+  share one), then replace the three placeholder cards below with real ones — at least three, per
+  the audit.
+-->
+<section class="block">
+  <p class="eyebrow">From organizers</p>
+  <h2 class="section-title">What people posting on NoClash say</h2>
+  <div class="testimonial-row">
+    <blockquote class="testimonial-card placeholder">
+      <p>&ldquo;Add a real one-line quote here.&rdquo;</p>
+      <cite>[Name], [role/group]</cite>
+    </blockquote>
+    <blockquote class="testimonial-card placeholder">
+      <p>&ldquo;Add a real one-line quote here.&rdquo;</p>
+      <cite>[Name], [role/group]</cite>
+    </blockquote>
+    <blockquote class="testimonial-card placeholder">
+      <p>&ldquo;Add a real one-line quote here.&rdquo;</p>
+      <cite>[Name], [role/group]</cite>
+    </blockquote>
+  </div>
 </section>
 
 <div class="home-banner">
