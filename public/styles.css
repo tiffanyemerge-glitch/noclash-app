@@ -250,7 +250,7 @@ section.block:first-of-type { margin-top: 30px; }
 
 /* ---------- PRICING ---------- */
 .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; margin-bottom: 26px; }
-.plan-card { background: var(--paper-soft); border: 1px solid var(--line); border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 10px; }
+.plan-card { position: relative; background: var(--paper-soft); border: 1px solid var(--line); border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 10px; }
 .plan-card.featured { border-color: var(--pin-gold); box-shadow: 0 0 0 1px var(--pin-gold); }
 .plan-card.pass { background: var(--board); color: var(--paper-soft); }
 .plan-card .tier { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; font-family: 'IBM Plex Mono', monospace; opacity: 0.8; }
@@ -258,6 +258,12 @@ section.block:first-of-type { margin-top: 30px; }
 .plan-card .price small { font-size: 0.9rem; font-weight: 500; opacity: 0.75; }
 .plan-card ul { margin: 6px 0 0; padding-left: 18px; font-size: 0.85rem; }
 .plan-card li { margin-bottom: 4px; }
+.plan-card .badge {
+  position: absolute; top: -12px; right: 16px; background: var(--pin-gold); color: #221a08;
+  font-size: 0.68rem; font-weight: 700; padding: 4px 10px; border-radius: 999px;
+  text-transform: uppercase; letter-spacing: 0.03em; box-shadow: 0 4px 10px var(--shadow);
+}
+.price-anchor { font-size: 0.85rem; color: var(--ink-soft); margin: -10px 0 20px; }
 
 table.compare { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
 table.compare th, table.compare td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); }
@@ -265,6 +271,9 @@ table.compare th { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; 
 table.compare td.yes { color: var(--ok-green); font-weight: 600; }
 .compare-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
 .compare-wrap table { min-width: 620px; }
+
+.reassure-row { margin-top: 18px; display: flex; flex-direction: column; gap: 6px; }
+.reassure-row p { margin: 0; font-size: 0.85rem; color: var(--ink-soft); }
 
 /* ---------- account / alerts ---------- */
 .chip-grid { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -287,7 +296,56 @@ table.compare td.yes { color: var(--ok-green); font-weight: 600; }
 .post-grid, .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; align-items: start; }
 @media (max-width: 820px) { .post-grid, .form-grid-2 { grid-template-columns: 1fr; } }
 
-footer.note { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 0.78rem; color: var(--ink-soft); }
+/* ---------- mobile tune-up (site audit D2.5) ---------- */
+/* Confirmed at 375px: nav wraps under the brand row, the pricing/home-pricing/city grids already
+   drop to one column via their auto-fit minmax tracks, and .btn-primary/.btn-gold/.btn-outline-ink
+   clear the 44px tap-target floor (12px vertical padding + line-height). This block just trims
+   the two layouts that were still cramped at that width. */
+@media (max-width: 480px) {
+  .home-hero { padding: 30px 22px; }
+  .home-hero h1 { font-size: 1.7rem; }
+  .filters .count { margin-left: 0; }
+  .plan-card .badge { position: static; display: inline-block; margin-bottom: 4px; }
+  .about-founder { flex-direction: column; align-items: center; text-align: center; }
+}
+
+.site-footer { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 0.78rem; color: var(--ink-soft); }
+.footer-nav { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-bottom: 10px; }
+.footer-nav a { color: var(--ink-soft); text-decoration: none; }
+.footer-nav a:hover { color: var(--ink); text-decoration: underline; }
+.footer-copy { margin: 0; }
+
+/* ---------- FAQ ---------- */
+.faq-list { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.faq-item { background: var(--paper-soft); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; }
+.faq-item summary { cursor: pointer; font-weight: 600; font-size: 0.95rem; }
+.faq-item p { margin: 10px 0 0; font-size: 0.88rem; color: var(--ink-soft); }
+
+/* ---------- about / founder ---------- */
+.about-founder { display: flex; gap: 26px; align-items: flex-start; margin: 22px 0 10px; flex-wrap: wrap; }
+.about-photo-placeholder {
+  width: 140px; height: 140px; flex-shrink: 0; border-radius: 12px; border: 1px dashed var(--line);
+  background: var(--surface); color: var(--ink-soft); display: flex; align-items: center; justify-content: center;
+  text-align: center; font-size: 0.78rem; padding: 10px;
+}
+.about-founder-copy { flex: 1; min-width: 240px; }
+.about-name { font-size: 1.1rem; font-weight: 700; margin: 0; }
+.about-role { font-size: 0.82rem; color: var(--ink-soft); margin: 2px 0 10px; font-family: 'IBM Plex Mono', monospace; }
+
+/* ---------- testimonials ---------- */
+.testimonial-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 12px; }
+.testimonial-card { background: var(--paper-soft); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin: 0; }
+.testimonial-card p { margin: 0 0 10px; font-size: 0.9rem; font-style: italic; }
+.testimonial-card cite { font-size: 0.78rem; color: var(--ink-soft); font-style: normal; }
+.testimonial-card.placeholder { border-style: dashed; opacity: 0.8; }
+
+/* ---------- vs / comparison pages ---------- */
+.vs-points { display: flex; flex-direction: column; gap: 16px; margin: 20px 0; }
+.vs-point { background: var(--paper-soft); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; }
+.vs-point h2 { margin: 0 0 8px; font-size: 1.05rem; }
+.vs-point p { margin: 0; font-size: 0.9rem; color: var(--ink-soft); }
+.vs-verdict { background: var(--ok-green-soft); border: 1px solid var(--ok-green); border-radius: 12px; padding: 16px 20px; }
+.vs-verdict p { margin: 4px 0 0; font-size: 0.92rem; color: var(--ink); }
 
 
 /* ---------- social links ---------- */
