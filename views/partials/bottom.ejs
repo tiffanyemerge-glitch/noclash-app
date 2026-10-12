@@ -1,6 +1,15 @@
   </main>
 
-  <footer class="note">
+  <footer class="site-footer">
+    <nav class="footer-nav">
+      <a href="/about">About</a>
+      <a href="/pricing">Pricing</a>
+      <a href="/cities">Cities</a>
+      <a href="/vs/facebook-events">NoClash vs Facebook Events</a>
+      <a href="/vs/eventbrite">NoClash vs Eventbrite</a>
+      <a href="/contact">Contact</a>
+    </nav>
+    <p class="footer-copy">&copy; <%= new Date().getFullYear() %> NoClash &mdash; Hampton Roads, VA.</p>
     <% if (typeof demoNote !== 'undefined' && demoNote) { %><%- demoNote %><% } %>
   </footer>
 </div>
